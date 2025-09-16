@@ -710,6 +710,9 @@ body::before{ content:""; position:fixed; top:0; right:0; width:var(--corner2-im
 <!-- ===== ระบบเกม (2 วงกลมเท่านั้น) ===== -->
 <script>
 (()=>{
+// กันรอหลอน ๆ ถ้ายังไม่พรีโหลด
+window.__ALL_IMAGES_READY__ = false;
+
 
   /* ---------- DOM ---------- */
   const game = document.getElementById('game');
@@ -1510,22 +1513,8 @@ async function runGlobalPreload(){
   }
 }
 
-async function startGame(){
-  // กันผู้เล่นกดจนถึงเกมก่อนพรีโหลดเสร็จ
-  while (!window.__ALL_IMAGES_READY__) {
-    await new Promise(r=>setTimeout(r,120));
-  }
-  document.body.classList.remove('prestart');
-  document.body.classList.add('in-game');
-  running=true; ended=false; paused=false;
-  overlay.style.visibility='hidden'; overlay.style.opacity='0';
-  score=0; round=0; updateHUD();
-  startGameTimer();
-  nextRound();
-// เริ่มพรีโหลดทันทีที่หน้าโหลดเสร็จ
+// เริ่มพรีโหลดทันทีที่หน้าโหลดเสร็จ (อยู่นอกทุกฟังก์ชัน)
 window.addEventListener('load', ()=> { runGlobalPreload(); });
-
-
 
 /* ===== [LEVEL 1] คลังคำถามแบบ “สิ่งมีชีวิตต้องการอะไร?” 2 ช้อยส์ =====
    ใส่ได้กี่ข้อก็ได้ รูปจะอ้างจาก FIXED_IMG_MAP ตามชื่อ prompt
@@ -1854,16 +1843,22 @@ function startRoundTimer(){
   awaitingAnswer = true;
 }
 
-  function startGame(){
-    document.body.classList.remove('prestart');
-    document.body.classList.add('in-game');   // ✅ แสดง HUD เมื่อเริ่มเล่นจริง
-    running=true; ended=false; paused=false;
-        window.ended = ended; // ✅ อัปเดตค่า global
-    overlay.style.visibility='hidden'; overlay.style.opacity='0';
-    score=0; round=0; updateHUD();
-        startGameTimer(); // [เพิ่มใหม่] เริ่มจับเวลาทั้งด่าน 2 นาที
-    nextRound();
+async function startGame(){
+  // รอให้พรีโหลดประกาศพร้อม
+  while (!window.__ALL_IMAGES_READY__) {
+    await new Promise(r => setTimeout(r, 120));
   }
+
+  document.body.classList.remove('prestart');
+  document.body.classList.add('in-game');
+  running=true; ended=false; paused=false;
+  window.ended = ended;
+  overlay.style.visibility='hidden'; overlay.style.opacity='0';
+  score=0; round=0; updateHUD();
+  startGameTimer();     // เดิมมีอยู่แล้ว
+  nextRound();          // เดิมมีอยู่แล้ว
+}
+
 
   // ======== จบด่าน (แก้ใหม่: หยุดสนามเกมทั้งหมดเมื่อสรุปคะแนน) ========
   function endLevel(){
