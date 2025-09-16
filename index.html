@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ตัวจิ๋วตะลุยป่า ป.4-6</title>
-<link rel="preconnect" href="https://krujaidee-max.github.io/jungleAdventure-Sci4" crossorigin>
 <style>
 
 /* ===== ฟอนต์รวมหน้า ===== */
@@ -581,7 +580,7 @@ body::before{ content:""; position:fixed; top:0; right:0; width:var(--corner2-im
 
 <div id="game" aria-label="สนามเกม">
   <div id="questionBox" aria-live="polite"></div>
-  <img id="qImg" alt="ภาพประกอบคำถาม" loading="eager" decoding="async" fetchpriority="high" />
+  <img id="qImg" alt="ภาพประกอบคำถาม" />
 </div>
 
 <!-- ===== Welcome (หน้าสุด) ===== -->
@@ -787,6 +786,17 @@ function resetClockUI(){
     const welcome = document.getElementById('welcome');
     const enterBtn = document.getElementById('enterBtn');
     const landing = document.getElementById('landing');
+// ↓ วางหลัง const welcome / enterBtn / landing
+enterBtn.addEventListener('click', async ()=>{
+  // ถ้าโหลดยังไม่เสร็จ ให้รอจนโหลดครบ
+  while (!window.__ALL_IMAGES_READY__) {
+    await new Promise(r=>setTimeout(r,120));
+  }
+  welcome.classList.add('hide');
+  landing.classList.remove('hide');
+  bgm?.play?.().catch(()=>{});
+});
+
 
  enterBtn.addEventListener('click', ()=>{ 
     welcome.classList.add('hide'); 
@@ -990,36 +1000,63 @@ function startTimebar(){}                 // no-op
 function stopTimebar(){}                  // no-op
 function updateTimebar(){}                // no-op
 
-async function dropQuestion(text, imgSrc){
+function dropQuestion(text, imgSrc){
+  // ข้อความ
   qBox.textContent = String(text);
+
+  // รีเซ็ตของค้างจากรอบก่อน
+  qBox.style.transition = '';
+  qImg.style.transition = '';
+  qBox.style.opacity = '';
+  qImg.style.opacity = '';
+  qBox.style.pointerEvents = 'auto';
+  qBox.style.top = 'var(--qTop)';
   qBox.style.display = 'block';
+
+  // ซ่อนข้อความไว้จนกว่ารูปจะพร้อม
   qBox.style.visibility = 'hidden';
 
+  // รีเซ็ตคลาส FX
   qBox.classList.remove('out-left','out-right','in-go','in-pre');
   qImg.classList.remove('out-left','out-right','in-go','in-pre');
-  qImg.classList.add('fx','in-pre');
+  qImg.classList.add('fx','in-pre');   // qBox ไม่มี fx/in-pre แล้ว
 
-  if (!imgSrc){
-    if (qImg){ qImg.style.display = 'none'; qImg.removeAttribute('src'); }
-    qBox.style.visibility = 'visible';
-    return;
-  }
+  // รูปภาพ
+  if (qImg){
+    if (imgSrc){
+      qImg.style.display = 'none';
 
-  const ok = await loadImageWithTimeout(imgSrc).catch(()=>false);
+      const startIn = () => {
+        qImg.style.display = 'block';
+        qBox.style.visibility = 'visible';  // ✅ โชว์ข้อความเมื่อรูปพร้อมแล้ว
+        requestAnimationFrame(() => {
+          // ใส่คลาสเข้าให้รูป (และจะใส่ให้ qBox ถ้าต้องการเอฟเฟกต์ข้อความด้วย)
+          qImg.classList.add('in-go');
+          // ถ้าอยากให้ข้อความนิ่ง ๆ ไม่ต้องใส่ in-go ให้ qBox
+          // qBox.classList.add('in-go');
+        });
+      };
+      const textOnly = () => {
+        qImg.style.display = 'none';
+        qBox.style.visibility = 'visible';   // ✅ รูปไม่มา แต่ปล่อยข้อความได้
+        // ถ้าอยากให้ข้อความนิ่ง ๆ ก็คงไว้แบบไม่มี in-go
+        // requestAnimationFrame(() => qBox.classList.add('in-go'));
+      };
 
-  if (ok){
-    if (qImg){
+      qImg.onload  = startIn;
+      qImg.onerror = textOnly;
       qImg.src = imgSrc;
-      qImg.style.display = 'block';
-      qBox.style.visibility = 'visible';
-      requestAnimationFrame(() => qImg.classList.add('in-go'));
-    }
-  }else{
-    if (qImg){
+
+      // เผื่อรูป cache แล้ว
+      if (qImg.complete && qImg.naturalWidth > 0) startIn();
+
+    } else {
+      // ไม่มีรูป → แสดงข้อความทันที
       qImg.style.display = 'none';
       qImg.removeAttribute('src');
+      qBox.style.visibility = 'visible';
+      // requestAnimationFrame(() => qBox.classList.add('in-go')); // ถ้าอยากมีเอฟเฟกต์
     }
-    qBox.style.visibility = 'visible';
   }
 }
 
@@ -1341,12 +1378,12 @@ const FIXED_IMG_MAP = {
   "ตะขาบ":       "invertebrates/animal67.png",
   "พยาธิตัวกลม":  "invertebrates/animal68.png",
 
-  "อะมีบา":            "invertebrates/animal69.png",
-  "แลคโตบาซิลลัส":             "invertebrates/animal70.png",
+  "เห็ด":            "invertebrates/animal69.png",
+  "รา":             "invertebrates/animal70.png",
   "แบคทีเรีย":       "invertebrates/animal71.png",
-  "ซายาโนแบคทีเรีย":          "invertebrates/animal72.png",
-  "รา": "invertebrates/animal73.png",
-  "เห็ดกระดุม":   "invertebrates/animal74.png",
+  "อะมีบา":          "invertebrates/animal72.png",
+  "ซายาโนแบคทีเรีย": "invertebrates/animal73.png",
+  "แลคโตบาซิลลัส":   "invertebrates/animal74.png",
   "เห็ดนางรม":       "invertebrates/animal75.png",
   "อี โคไล":         "invertebrates/animal76.png",
 
@@ -1358,7 +1395,7 @@ const FIXED_IMG_MAP = {
   "ถั่วงอก":        "image/plant5.png",
   "ผัก":            "image/plant6.png",
   "หญ้า":          "image/plant7.png",
-  "ต้นกระบองเพชร":  "image/plant8.png",
+  "ต้นกระบอกเพชร":  "image/plant8.png",
   "ต้นข้าว":        "image/plant9.png",
   "กล้วยไม้":       "image/plant10.png",
   "ต้นดอกทานตะวัน": "image/plant11.png",
@@ -1376,49 +1413,117 @@ const FIXED_IMG_MAP = {
   "กุหลาบ":        "image/plant23.png",
   "ชายผ้าสีดา":    "image/plant24.png",
   "ไข่ผำ":          "image/plant25.png",
-
 };
 
-/* ===== Image Preload Utils ===== */
-const IMG_PRELOAD_TIMEOUT = 3500;
-const __imgCache = new Map();
+/* ===== Image Preload (batched + retry + progress) ===== */
+const __imgMemo = new Map();
 
-function loadImageWithTimeout(src, timeout = IMG_PRELOAD_TIMEOUT){
+function preloadOne(src, timeout = 8000, tries = 2){
   if (!src) return Promise.resolve(false);
-  if (__imgCache.has(src)) return __imgCache.get(src);
+  if (__imgMemo.has(src)) return __imgMemo.get(src);
 
-  const p = new Promise((resolve) => {
+  const runner = (attempt)=> new Promise(resolve=>{
     const img = new Image();
     let done = false;
-    const settle = (ok)=>{ if (done) return; done = true; resolve(ok); };
-    const t = setTimeout(()=> settle(false), timeout);
-    img.onload  = ()=>{ clearTimeout(t); settle(true); };
-    img.onerror = ()=>{ clearTimeout(t); settle(false); };
-    img.referrerPolicy = 'no-referrer';
+    const settle = ok => { if (done) return; done = true; resolve(ok); };
+    const t = setTimeout(()=>{ img.onload = img.onerror = null; if (attempt<tries) {
+        settle(false);
+      } else settle(false);
+    }, timeout);
+    img.onload  = ()=>{ clearTimeout(t); settle(true);  };
+    img.onerror = ()=>{ clearTimeout(t); if (attempt < tries) {
+        // ลองใหม่หลังพักสั้น ๆ
+        setTimeout(()=> runner(attempt+1).then(resolve), 250 + Math.random()*500);
+      } else settle(false);
+    };
     img.decoding = 'async';
     img.loading  = 'eager';
+    img.referrerPolicy = 'no-referrer';
     img.src = src;
   });
 
-  __imgCache.set(src, p);
+  const p = runner(0);
+  __imgMemo.set(src, p);
   return p;
 }
 
-function pickLevelImages(level){
-  const arr = [];
-  const pushFrom = (bank)=> bank.forEach(q => { if (q.img) arr.push(q.img); });
-  if (level === 1) pushFrom(LEVEL1_BANK);
-  else if (level === 2) pushFrom(NEEDS_BANK);
-  else if (level === 3) pushFrom(LEVEL3_BANK);
-  return [...new Set(arr)];
-}
-
-async function preloadByBatches(srcList, batchSize = 16){
-  for (let i = 0; i < srcList.length; i += batchSize){
-    const batch = srcList.slice(i, i + batchSize).map(s => loadImageWithTimeout(s));
-    await Promise.allSettled(batch);
+async function preloadInBatches(urls, batchSize = 16, onProgress = ()=>{}){
+  const list = urls.filter(Boolean);
+  let done = 0;
+  const step = async batch=>{
+    await Promise.allSettled(batch.map(u=>preloadOne(u)));
+    done += batch.length;
+    onProgress(Math.min(1, done / list.length));
+  };
+  for (let i=0; i<list.length; i+=batchSize){
+    const batch = list.slice(i, i+batchSize);
+    /* อย่าอัดพร้อมกันทีเดียวทั้งหมด — GitHub Pages จะหอบ */
+    // หน่วงเล็กน้อยระหว่างแบตช์ ช่วยเสถียรบน GitHub
+    await step(batch);
+    await new Promise(r=>setTimeout(r, 60));
   }
 }
+
+/* รวมลิสต์รูปทั้งหมดที่เกมต้องใช้ */
+function collectAllGameImages(){
+  const uniq = new Set();
+
+  // จาก FIXED_IMG_MAP
+  Object.values(FIXED_IMG_MAP).forEach(p => uniq.add(p));
+
+  // จากธง/แบนเนอร์/ฉาก/ปุ่ม ฯลฯ ที่อ้างตรงใน HTML/CSS
+  [
+    "image/background2.png", "image/banner2.png", "image/welcome.png",
+    "image/guide.png", "image/button1.png", "image/button2.png",
+    "image/ans1.png"
+  ].forEach(p => uniq.add(p));
+
+  // จากแบงค์คำถาม (ถ้าเซ็ต q.img ไว้แล้ว)
+  if (Array.isArray(LEVEL1_BANK)) LEVEL1_BANK.forEach(q => q?.img && uniq.add(q.img));
+  if (Array.isArray(NEEDS_BANK))  NEEDS_BANK.forEach(q  => q?.img && uniq.add(q.img));
+  if (Array.isArray(LEVEL3_BANK)) LEVEL3_BANK.forEach(q => q?.img && uniq.add(q.img));
+
+  // แปลงให้เป็น URL ที่อิงจากหน้าเว็บปัจจุบัน (กันพาธ relative เพี้ยน)
+  return [...uniq].map(p => new URL(p, location.href).href);
+}
+
+/* แสดงผลความคืบหน้าใน overlay */
+function bindPreloadProgress(){
+  const bar  = document.getElementById('preloadBar');
+  const text = document.getElementById('preloadText');
+  return (ratio)=>{
+    const pct = Math.round(ratio*100);
+    if (bar)  bar.style.width = pct + '%';
+    if (text) text.textContent = `กำลังเตรียมข้อมูล… ${pct}%`;
+  };
+}
+
+async function runGlobalPreload(){
+  const urls = collectAllGameImages();
+  const onProgress = bindPreloadProgress();
+  try{
+    await preloadInBatches(urls, 18, onProgress);  // 12–24 กำลังดีบน GitHub Pages
+  } finally {
+    // ไม่ว่าบางรูปจะ fail บ้าง เราก็ไปต่อ (เพราะมี retry แล้ว)
+    document.getElementById('preloadOverlay')?.remove();
+    window.__ALL_IMAGES_READY__ = true;
+  }
+}
+
+async function startGame(){
+  // กันผู้เล่นกดจนถึงเกมก่อนพรีโหลดเสร็จ
+  while (!window.__ALL_IMAGES_READY__) {
+    await new Promise(r=>setTimeout(r,120));
+  }
+  document.body.classList.remove('prestart');
+  document.body.classList.add('in-game');
+  running=true; ended=false; paused=false;
+  overlay.style.visibility='hidden'; overlay.style.opacity='0';
+  score=0; round=0; updateHUD();
+  startGameTimer();
+  nextRound();
+// เริ่มพรีโหลดทันทีที่หน้าโหลดเสร็จ
+window.addEventListener('load', ()=> { runGlobalPreload(); });
 
 
 
@@ -1427,75 +1532,75 @@ async function preloadByBatches(srcList, batchSize = 16){
    choices: [ตัวเลือกซ้าย, ตัวเลือกขวา], correct: index ที่ถูก (0 หรือ 1)
 */
 const NEEDS_BANK = [
-    { prompt:"ปลาหมอ", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-    { prompt:"ปลาเก๋า", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-    { prompt:"ปลาชะโด", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-    { prompt:"ปลาการ์ตูน", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-    { prompt:"ปลาทูน่า", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-    { prompt:"ปลาไหล", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
-    { prompt:"ฉลาม", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
-    { prompt:"ปลาทอง", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
+    { prompt:"ปลาหมอ", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"ปลาเก๋า", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"ปลาชะโด", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"ปลาการ์ตูน", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"ปลาทูน่า", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"ปลาไหล", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+    { prompt:"ฉลาม", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+    { prompt:"ปลาทอง", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
  
-    { prompt:"อึ่งอ่าง", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
-        { prompt:"ซาลาแมนเดอร์", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-        { prompt:"คางคก", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
-    { prompt:"เขียด", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-    { prompt:"กบ", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-        { prompt:"แอกโซลอเติล", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 }, 
-        { prompt:"เขียดงู", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"อึ่งอ่าง", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ซาลาแมนเดอร์", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"คางคก", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+    { prompt:"เขียด", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"กบ", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"แอกโซลอเติล", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 }, 
+        { prompt:"เขียดงู", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
 
-        { prompt:"จระเข้", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-        { prompt:"เต่า", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-    { prompt:"จิ้งจก", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-    { prompt:"กิ้งก่า", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-        { prompt:"มังกรโคโมโด", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-    { prompt:"งู", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"จระเข้", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"เต่า", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"จิ้งจก", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"กิ้งก่า", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"มังกรโคโมโด", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"งู", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
 
-        { prompt:"ไก่", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
-        { prompt:"เป็ด", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
-    { prompt:"นกพิราบ", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
-        { prompt:"นกฮูก", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
-        { prompt:"อีกา", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
-        { prompt:"นกอินทรี", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-    { prompt:"นกกระจอกเทศ", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-        { prompt:"นกฟลามิงโก", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"ไก่", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"เป็ด", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+    { prompt:"นกพิราบ", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"นกฮูก", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"อีกา", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"นกอินทรี", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"นกกระจอกเทศ", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"นกฟลามิงโก", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
 
-        { prompt:"วัว", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-        { prompt:"สิงโต", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-        { prompt:"วาฬ", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-        { prompt:"โลมา", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-        { prompt:"ลิงกอริลา", choices:[" มีกระดูก สันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
-        { prompt:"ม้าลาย", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
-        { prompt:"ฮิปโป", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
-        { prompt:"ช้าง", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
-        { prompt:"หมีแพนด้า", choices:["ไม่มีกระดูกสันหลัง"," มีกระดูก สันหลัง"], correct:1 },
-        { prompt:"หมู", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:1 },
-        { prompt:"เสือ", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:1 },
-        { prompt:"หนู", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:1 },
-        { prompt:"ควาย", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:1 },
-        { prompt:"คน", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:1 },
+        { prompt:"วัว", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"สิงโต", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"วาฬ", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"โลมา", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"ลิงกอริลา", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"ม้าลาย", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ฮิปโป", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ช้าง", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"หมีแพนด้า", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"หมู", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"เสือ", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"หนู", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ควาย", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"คน", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
 
-        { prompt:"หอยทาก", choices:["มีกระดูก  สันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
-    { prompt:"ผีเสื้อ", choices:["มีกระดูก  สันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
-    { prompt:"ยุง", choices:["มีกระดูก  สันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
-        { prompt:"หนอน", choices:["มีกระดูก  สันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
-        { prompt:"ไส้เดือน", choices:["มีกระดูก  สันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
-        { prompt:"หอย", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:0 },
-        { prompt:"มด", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:0 },
-        { prompt:"แมลงเต่าทอง", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:0 },
-        { prompt:"กุ้ง", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:0 },
-        { prompt:"ปลาหมึก", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:0 },
-        { prompt:"แมงมุม", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:0 },
-     { prompt:"ปู", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:0 },
-     { prompt:"ตุ๊กแก", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:1 },
-        { prompt:"ดาวทะเล", choices:["มีกระดูก  สันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
-        { prompt:"เม่นทะเล", choices:["มีกระดูก  สันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
-        { prompt:"ฟองน้ำ", choices:["มีกระดูก  สันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
-        { prompt:"แมงกะพรุน", choices:["มีกระดูก  สันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
-        { prompt:"พยาธิใบไม้", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:0 },
-        { prompt:"พลานาเรีย", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:0 },
-        { prompt:"ตะขาบ", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:0 },
-        { prompt:"พยาธิตัวกลม", choices:["ไม่มีกระดูกสันหลัง","มีกระดูก  สันหลัง"], correct:0 },
+        { prompt:"หอยทาก", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+    { prompt:"ผีเสื้อ", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+    { prompt:"ยุง", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"หนอน", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ไส้เดือน", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"หอย", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"มด", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"แมลงเต่าทอง", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"กุ้ง", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"ปลาหมึก", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"แมงมุม", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+     { prompt:"ปู", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+     { prompt:"ตุ๊กแก", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ดาวทะเล", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"เม่นทะเล", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ฟองน้ำ", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"แมงกะพรุน", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"พยาธิใบไม้", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"พลานาเรีย", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"ตะขาบ", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"พยาธิตัวกลม", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
 ];
 
 // ===  "ด่าน 1" สิ่งมีชีวิต 3 อย่าง ===
@@ -1574,7 +1679,7 @@ const LEVEL1_BANK = [
         { prompt:"ตะขาบ", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
         { prompt:"พยาธิตัวกลม", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
 
-        { prompt:"เห็ดกระดุม", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:0 },
+        { prompt:"เห็ด", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:0 },
         { prompt:"รา", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:0 },
         { prompt:"แบคทีเรีย", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:1 },
         { prompt:"อะมีบา", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:1 },
@@ -2052,17 +2157,6 @@ document.addEventListener('visibilitychange', ()=>{ if(document.hidden && stream
 
 
     window.currentLevel = lv; // กันพลาดข้ามสโคป
-  // ==== เริ่มพรีโหลดรูปเฉพาะด่านที่เลือก ====
-  try {
-    const imgs = pickLevelImages(lv);
-    const firstChunk = imgs.slice(0, 16);
-    Promise.allSettled(firstChunk.map(s => loadImageWithTimeout(s)))
-      .then(() => {
-        const rest = imgs.slice(16);
-        preloadByBatches(rest, 24); // preload ต่อเบื้องหลัง
-      });
-  } catch (e) {}
-
        document.body.classList.add('prestart'); 
     landing.classList.add('hide');
     startScreen.style.display='flex';
@@ -2106,6 +2200,19 @@ function getMissionTitle(lv){
   document.getElementById('guideBack')?.addEventListener('click', ()=>{ guideScreen.style.display='none'; landing.classList.remove('hide') });
 })();
 </script>
+
+<!-- ===== Preload Overlay ===== -->
+<div id="preloadOverlay" style="
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:#000c; color:#fff; z-index:99999; flex-direction:column; gap:12px; font-weight:900;">
+  <div id="preloadText" style="font-size:20px">กำลังเตรียมข้อมูล… 0%</div>
+  <div style="width:min(80vw,480px); height:10px; background:#ffffff22; border-radius:999px; overflow:hidden">
+    <div id="preloadBar" style="height:100%; width:0%; background:#10b981"></div>
+  </div>
+  <div style="font-size:12px;opacity:.8">...รอสักครู่...</div>
+</div>
+
 </body>
 </html>
+
 
