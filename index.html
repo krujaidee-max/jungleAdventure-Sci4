@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ตัวจิ๋วตะลุยป่า ป.4-6</title>
+<link rel="preconnect" href="https://krujaidee-max.github.io/jungleAdventure-Sci4" crossorigin>
 <style>
 
 /* ===== ฟอนต์รวมหน้า ===== */
@@ -580,7 +581,7 @@ body::before{ content:""; position:fixed; top:0; right:0; width:var(--corner2-im
 
 <div id="game" aria-label="สนามเกม">
   <div id="questionBox" aria-live="polite"></div>
-  <img id="qImg" alt="ภาพประกอบคำถาม" />
+  <img id="qImg" alt="ภาพประกอบคำถาม" loading="eager" decoding="async" fetchpriority="high" />
 </div>
 
 <!-- ===== Welcome (หน้าสุด) ===== -->
@@ -989,63 +990,36 @@ function startTimebar(){}                 // no-op
 function stopTimebar(){}                  // no-op
 function updateTimebar(){}                // no-op
 
-function dropQuestion(text, imgSrc){
-  // ข้อความ
+async function dropQuestion(text, imgSrc){
   qBox.textContent = String(text);
-
-  // รีเซ็ตของค้างจากรอบก่อน
-  qBox.style.transition = '';
-  qImg.style.transition = '';
-  qBox.style.opacity = '';
-  qImg.style.opacity = '';
-  qBox.style.pointerEvents = 'auto';
-  qBox.style.top = 'var(--qTop)';
   qBox.style.display = 'block';
-
-  // ซ่อนข้อความไว้จนกว่ารูปจะพร้อม
   qBox.style.visibility = 'hidden';
 
-  // รีเซ็ตคลาส FX
   qBox.classList.remove('out-left','out-right','in-go','in-pre');
   qImg.classList.remove('out-left','out-right','in-go','in-pre');
-  qImg.classList.add('fx','in-pre');   // qBox ไม่มี fx/in-pre แล้ว
+  qImg.classList.add('fx','in-pre');
 
-  // รูปภาพ
-  if (qImg){
-    if (imgSrc){
-      qImg.style.display = 'none';
+  if (!imgSrc){
+    if (qImg){ qImg.style.display = 'none'; qImg.removeAttribute('src'); }
+    qBox.style.visibility = 'visible';
+    return;
+  }
 
-      const startIn = () => {
-        qImg.style.display = 'block';
-        qBox.style.visibility = 'visible';  // ✅ โชว์ข้อความเมื่อรูปพร้อมแล้ว
-        requestAnimationFrame(() => {
-          // ใส่คลาสเข้าให้รูป (และจะใส่ให้ qBox ถ้าต้องการเอฟเฟกต์ข้อความด้วย)
-          qImg.classList.add('in-go');
-          // ถ้าอยากให้ข้อความนิ่ง ๆ ไม่ต้องใส่ in-go ให้ qBox
-          // qBox.classList.add('in-go');
-        });
-      };
-      const textOnly = () => {
-        qImg.style.display = 'none';
-        qBox.style.visibility = 'visible';   // ✅ รูปไม่มา แต่ปล่อยข้อความได้
-        // ถ้าอยากให้ข้อความนิ่ง ๆ ก็คงไว้แบบไม่มี in-go
-        // requestAnimationFrame(() => qBox.classList.add('in-go'));
-      };
+  const ok = await loadImageWithTimeout(imgSrc).catch(()=>false);
 
-      qImg.onload  = startIn;
-      qImg.onerror = textOnly;
+  if (ok){
+    if (qImg){
       qImg.src = imgSrc;
-
-      // เผื่อรูป cache แล้ว
-      if (qImg.complete && qImg.naturalWidth > 0) startIn();
-
-    } else {
-      // ไม่มีรูป → แสดงข้อความทันที
+      qImg.style.display = 'block';
+      qBox.style.visibility = 'visible';
+      requestAnimationFrame(() => qImg.classList.add('in-go'));
+    }
+  }else{
+    if (qImg){
       qImg.style.display = 'none';
       qImg.removeAttribute('src');
-      qBox.style.visibility = 'visible';
-      // requestAnimationFrame(() => qBox.classList.add('in-go')); // ถ้าอยากมีเอฟเฟกต์
     }
+    qBox.style.visibility = 'visible';
   }
 }
 
@@ -1404,6 +1378,49 @@ const FIXED_IMG_MAP = {
   "ไข่ผำ":          "image/plant25.png",
 
 };
+
+/* ===== Image Preload Utils ===== */
+const IMG_PRELOAD_TIMEOUT = 3500;
+const __imgCache = new Map();
+
+function loadImageWithTimeout(src, timeout = IMG_PRELOAD_TIMEOUT){
+  if (!src) return Promise.resolve(false);
+  if (__imgCache.has(src)) return __imgCache.get(src);
+
+  const p = new Promise((resolve) => {
+    const img = new Image();
+    let done = false;
+    const settle = (ok)=>{ if (done) return; done = true; resolve(ok); };
+    const t = setTimeout(()=> settle(false), timeout);
+    img.onload  = ()=>{ clearTimeout(t); settle(true); };
+    img.onerror = ()=>{ clearTimeout(t); settle(false); };
+    img.referrerPolicy = 'no-referrer';
+    img.decoding = 'async';
+    img.loading  = 'eager';
+    img.src = src;
+  });
+
+  __imgCache.set(src, p);
+  return p;
+}
+
+function pickLevelImages(level){
+  const arr = [];
+  const pushFrom = (bank)=> bank.forEach(q => { if (q.img) arr.push(q.img); });
+  if (level === 1) pushFrom(LEVEL1_BANK);
+  else if (level === 2) pushFrom(NEEDS_BANK);
+  else if (level === 3) pushFrom(LEVEL3_BANK);
+  return [...new Set(arr)];
+}
+
+async function preloadByBatches(srcList, batchSize = 16){
+  for (let i = 0; i < srcList.length; i += batchSize){
+    const batch = srcList.slice(i, i + batchSize).map(s => loadImageWithTimeout(s));
+    await Promise.allSettled(batch);
+  }
+}
+
+
 
 /* ===== [LEVEL 1] คลังคำถามแบบ “สิ่งมีชีวิตต้องการอะไร?” 2 ช้อยส์ =====
    ใส่ได้กี่ข้อก็ได้ รูปจะอ้างจาก FIXED_IMG_MAP ตามชื่อ prompt
@@ -2035,6 +2052,17 @@ document.addEventListener('visibilitychange', ()=>{ if(document.hidden && stream
 
 
     window.currentLevel = lv; // กันพลาดข้ามสโคป
+  // ==== เริ่มพรีโหลดรูปเฉพาะด่านที่เลือก ====
+  try {
+    const imgs = pickLevelImages(lv);
+    const firstChunk = imgs.slice(0, 16);
+    Promise.allSettled(firstChunk.map(s => loadImageWithTimeout(s)))
+      .then(() => {
+        const rest = imgs.slice(16);
+        preloadByBatches(rest, 24); // preload ต่อเบื้องหลัง
+      });
+  } catch (e) {}
+
        document.body.classList.add('prestart'); 
     landing.classList.add('hide');
     startScreen.style.display='flex';
@@ -2080,6 +2108,4 @@ function getMissionTitle(lv){
 </script>
 </body>
 </html>
-
-
 
