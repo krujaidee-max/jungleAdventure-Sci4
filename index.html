@@ -1,0 +1,2020 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ตัวจิ๋วตะลุยป่า ป.4-6</title>
+<style>
+
+/* ===== ฟอนต์รวมหน้า ===== */
+@font-face{
+  font-family: 'MyGameFont';
+  src: url('image/THSarabunNew.woff2') format('woff2'),
+       url('image/THSarabunNew.woff') format('woff'),
+       url('image/THSarabunNew.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face{
+  font-family: 'MyGameFont';
+  src: url('image/THSarabunNewBold.woff2') format('woff2'),
+       url('image/THSarabunNewBold.woff') format('woff'),
+       url('image/THSarabunNewBold.ttf') format('truetype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+html, body, button, input, select, textarea, .pill, .btn, .btn-mini,
+.levelBtn, #startTitle, #countdown, .label, #timer {
+  font-family: 'MyGameFont', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+}
+
+:root{
+  --glass: rgba(0,0,0,.45);
+  --ok: #10b981;
+  --bad: #ef4444;
+  --hud-top: 15px;                 
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+
+*{ box-sizing:border-box }
+html,body{ height:100%; margin:0 }
+body{
+  background: url("image/background2.png") center center / cover no-repeat fixed !important;
+  overflow:hidden; color:#fff;
+}
+#game{ position:relative; width:100vw; height:100vh; overflow:hidden }
+
+/* ===== HUD ===== */
+.hud{
+  position:fixed;
+  inset: calc(var(--safe-top) + var(--hud-top)) 5px auto 38px !important;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  justify-content:space-between;
+  pointer-events:none;
+  z-index:40000;
+}
+
+/* === ซ่อน/แสดง HUD และนาฬิกา === */
+/* ซ่อน HUD ถ้าไม่ได้อยู่ในเกม และไม่ได้อยู่หน้า prestart */
+body:not(.in-game):not(.prestart) .hud {
+  display: none !important;
+}
+/* นาฬิกา โผล่เฉพาะตอน in-game เท่านั้น */
+body:not(.in-game) #clock {
+  display: none !important;
+}
+
+
+
+/* ===== Game Clock (Top Center, uses existing timer) ===== */
+#clock.clock-pill{
+  position:fixed;
+  top:14px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:16000;
+  pointer-events:none;
+
+  /* ปรับขนาดได้ */
+  --clock-size: 40px;
+  font-size: var(--clock-size);
+
+  background: var(--glass);
+  backdrop-filter: blur(6px);
+  color:#fff;
+  font-weight:1000;
+  line-height:1;
+  border-radius:999px;
+  padding:8px 16px;
+  box-shadow:0 4px 18px rgba(0,0,0,.25);
+  text-shadow:0 3px 10px rgba(0,0,0,.55);
+}
+@media (max-width:480px){
+  #clock.clock-pill{ --clock-size: 28px; padding:6px 12px; }
+}
+
+.pill{ background:var(--glass); backdrop-filter:blur(6px); padding:8px 12px; border-radius:999px; box-shadow:0 4px 18px rgba(0,0,0,.25) }
+#timer{ font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:.5px; font-size:20px }
+.btn-mini{ pointer-events:auto; background:#1f2937; color:#fff; border:none; border-radius:12px; padding:8px 12px; font-weight:800; cursor:pointer; box-shadow:0 4px 18px rgba(0,0,0,.25) }
+.btn-mini:hover{ filter:brightness(1.1) }
+
+.score-label{ font-size:20px; font-weight:900; color:#fff; margin-bottom:6px; text-align:center; width:100%; margin-top:-4px; }
+
+/* กล่องคะแนนเป็นตัวเลข ปรับขนาดด้วย --score-size */
+.pill.gold{
+  --score-size: 42px;             /* << เปลี่ยนเลขนี้เพื่อปรับขนาด */
+  background: var(--glass);
+  border-radius: 12px;
+  padding: 6px 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(var(--score-size) * 1.6);
+  box-shadow: 0 4px 18px rgba(0,0,0,.25);
+}
+.pill.gold .num{
+  font-size: var(--score-size);
+  font-weight: 1000;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .5px;
+}
+
+@media (max-width:480px){ .pill.gold{ --gold-size:24px; --gold-cols:8; --gold-rows:2 } }
+
+/* ===== Welcome / Landing ===== */
+#landing{ position:fixed; inset:0; display:flex; flex-direction:column; gap:22px; align-items:center; justify-content:center; background:url("image/background2.png") center/cover no-repeat fixed !important; z-index:20000; transition:opacity .3s ease }
+#landing.hide{ opacity:0; pointer-events:none; visibility:hidden }
+#landing .brand{ width:min(92vw,1100px) }
+#landing .brand img{ width:100%; height:auto; display:block; filter:drop-shadow(0 10px 30px rgba(0,0,0,.6)) }
+#welcome{ position:fixed; inset:0; background:url("image/welcome.png") center/cover no-repeat fixed; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; z-index:25000; transition:opacity .3s ease; }
+#welcome.hide{ opacity:0; pointer-events:none; visibility:hidden }
+#welcome #enterBtn{ padding:12px 28px; font-size:clamp(22px,4vw,36px); font-weight:1000; letter-spacing:.2px; border:0; border-radius:16px; color:#fff; background:rgba(0,0,0,.55); box-shadow:0 10px 28px rgba(0,0,0,.35); cursor:pointer; backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,.18) }
+
+#welcome .brand{ width:min(90vw,1000px); 
+        margin-bottom:100px; 
+        display:flex; 
+        justify-content:center 
+}
+
+#welcome .brand 
+        img{ width:130%; 
+        height:auto; display:block; 
+        animation:pulse 3s infinite ease-in-out; 
+        filter:drop-shadow(0 6px 18px rgba(0,0,0,.45)) 
+}
+
+#welcome .welcome-content{ 
+       display:flex; 
+       flex-direction:column; 
+       align-items:center; gap:0; 
+       margin-top:100px 
+}
+@keyframes pulse{ 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.04);opacity:.9} }
+.level-menu{ display:flex; flex-direction:column; gap:14px; width:min(92vw,640px) }
+.levelBtn{ width:100%; padding:10px 16px; font-size:clamp(20px,4vw,34px); font-weight:1000; letter-spacing:.2px; border:0; border-radius:14px; color:#fff; background:rgba(0,0,0,.55); box-shadow:0 10px 28px rgba(0,0,0,.35); cursor:pointer; text-align:center; border:1px solid rgba(255,255,255,.18); backdrop-filter:blur(6px) }
+
+/* ===== หน้าเริ่ม/นับถอยหลัง ===== */
+#startScreen{
+  position:fixed;
+  inset:0;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.9);
+  z-index:30000;       
+  text-align:center;
+  padding:24px;
+}
+
+#startTitle{ font-size:clamp(26px,5vw,48px); font-weight:900; margin-bottom:10px }
+#startBtn{ margin-top:12px; padding:10px 18px; border:0; border-radius:12px; font-weight:800; cursor:pointer; background:#1f2937; color:#fff }
+#countdown{ display:none; font-size:clamp(56px,12vw,120px); font-weight:1000; line-height:1; margin-top:8px }
+
+/* ===== ภาพประกอบคำถาม (จัดกลางทั้งแนวตั้ง-แนวนอน) ===== */
+#qImg{
+  position:absolute;
+  top: 50%;
+  left: 50%;
+  max-width: min(60vw, 720px);
+  max-height: min(48vh, 480px);
+  width:auto; height:auto;
+  display:none;
+  z-index:9;
+  filter: drop-shadow(0 10px 30px rgba(0,0,0,.45));
+  border-radius: 12px;
+
+  /* จัดกลางแท้ ๆ แล้วค่อยเติม FX */
+  transform: translate(-50%, -50%)
+             translate(var(--fxX, 0), var(--fxY, 0))
+             scale(var(--fxS, 1));
+
+  transition:
+    transform 520ms cubic-bezier(.2,.9,.2,1),
+    opacity 520ms;
+}
+
+
+/* ===== กล่องคำถาม (เวอร์ชันใช้ตัวแปร FX) ===== */
+#questionBox{
+  position: fixed;             /* เดิมเป็น absolute → fixed เพื่ออิง viewport ตลอด */
+  top: var(--qTop);            /* ใช้ตัวแปรกำหนดระยะจากขอบบน */
+  left: 50%;
+  transform: translate(-50%, 0)
+             translate(var(--fxX, 0), var(--fxY, 0))
+             scale(var(--fxS, 1));
+  background:none; border:none; padding:0;
+  font-size: clamp(var(--qFontMin), var(--qFontVW), var(--qFontMax)); 
+  font-weight:1000; color:#fff;
+  text-shadow:0 4px 12px rgba(0,0,0,.8);
+  z-index: 10;
+  white-space:pre; overflow:visible; text-align:center;
+  transition: transform 520ms cubic-bezier(.2,.9,.2,1), opacity 520ms;
+}
+
+#questionBox.pre-drop{
+  top: calc(var(--qTop) - 40px);
+  opacity: 0;
+}
+
+/* ===== ตัวเลือกแบบวงกลม 2 ปุ่ม ===== */
+.option.circle{
+  position:absolute;
+  width: var(--c-sz, clamp(120px, 18vw, 220px));
+  height: var(--c-sz, clamp(120px, 18vw, 220px));
+  border-radius:50%;
+  border:10px solid transparent;
+  background:
+    radial-gradient(35% 35% at 30% 30%, rgba(255,255,255,.18), rgba(255,255,255,0) 60%) padding-box,
+    var(--ring, linear-gradient(130deg,#999,#666)) border-box;
+  box-shadow:0 8px 28px rgba(0,0,0,.35);
+  display:grid; place-items:center;
+  cursor:pointer; user-select:none; z-index:12;
+  transition: top 800ms cubic-bezier(.2,.9,.2,1),
+             left 800ms cubic-bezier(.2,.9,.2,1);
+}
+
+.option.circle .label{ 
+       font-weight:1000; 
+       font-size:clamp(18px,2.2vw,32px); 
+       color:#fff; 
+       text-align:center; 
+       text-shadow:0 3px 10px rgba(0,0,0,.6); 
+       padding:0 10px; line-height:1.15 }
+
+/* ===== ปุ่มตัวเลือกใหม่ ===== */
+.option.circle.live {
+  background: rgba(0,0,0,.55);                  
+  border: 10px solid #d97706;                    
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);       
+}
+
+.option.circle.non {
+  background: rgba(0,0,0,.55);                  
+  border: 10px solid #a855f7;                  
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);      
+}
+
+/* ขนาดของวงกลม (ปรับได้ตรงนี้) */
+.option.circle {
+  --c-sz: clamp(140px, 20vw, 240px);        
+}
+
+/* ===== เอฟเฟกต์เข้าแบบ zoom-in-bounce ===== */
+.option.circle.in-anim {
+  animation: zoomInBounce 650ms cubic-bezier(.25,.8,.25,1) forwards;
+  transform: scale(0.3);      /* เริ่มเล็กและจาง */
+  opacity: 0;
+}
+
+@keyframes zoomInBounce {
+  0%   { transform: scale(0.3); opacity: 0; }
+  60%  { transform: scale(1.1); opacity: 1; }  
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+/* ตัวหนังสือในปุ่ม (ปรับได้ตรงนี้) */
+.option.circle .label {
+  font-size: clamp(22px, 3vw, 40px);          /* ขนาดตัวอักษร */
+  font-weight: 900;                             /* ความหนา */
+  letter-spacing: .5px;                         /* ระยะห่างตัวอักษร */
+  color: #fff;                                  /* สีข้อความ */
+}
+
+.option.circle.glow{
+  filter: drop-shadow(0 0 10px rgba(250,204,21,.70)) drop-shadow(0 0 18px rgba(250,204,21,.55));
+}
+
+/* ===== แถบเวลา ===== */
+#timebarWrap{ position:fixed; left:0; right:0; bottom:0; height:12px; background:rgba(255,255,255,.12); z-index:16000; border-top:1px solid rgba(255,255,255,.2) }
+#timebar{ height:100%; width:0%; background:#10b981; transition:width .1s linear }
+
+/* ===== เอฟเฟกต์/Toast/ภาพผลลัพธ์ ===== */
+#flash{ position:fixed; inset:0; background:transparent; pointer-events:none; z-index:17000 }
+.flash-clear{ animation: flashC 2000ms ease-out }
+@keyframes flashC{ 0%{background:rgba(255,255,255,.55)} 100%{background:transparent} }
+
+.flash-in{ animation: flashIn .35s ease-out }
+@keyframes flashIn{
+  0%{ opacity:0; transform:translate(-50%,-50%) scale(1.04); box-shadow:0 0 0 0 rgba(255,255,255,0), 0 0 0 0 rgba(255,255,255,0) }
+  30%{ opacity:1; box-shadow:0 0 24px 6px rgba(255,255,255,.75), 0 0 64px 12px rgba(255,255,255,.55) }
+  100%{ opacity:1; transform:translate(-50%,-50%) scale(1); box-shadow:none }
+}
+.flash-in-cover{ animation: flashInCover .35s ease-out }
+@keyframes flashInCover{
+  0%{ opacity:0; box-shadow:0 0 0 0 rgba(255,255,255,0), 0 0 0 0 rgba(255,255,255,0) }
+  30%{ opacity:1; box-shadow:0 0 24px 6px rgba(255,255,255,.75), 0 0 64px 12px rgba(255,255,255,.55) }
+  100%{ opacity:1; box-shadow:none }
+}
+
+#roundToast{
+  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+  background:rgba(0,0,0,.78); border:1px solid rgba(255,255,255,.22);
+  padding:18px 26px; border-radius:16px; font-size:clamp(22px,3vw,34px); font-weight:900;
+  z-index:17500; display:none; text-align:center; white-space:nowrap; line-height:1.25;
+}
+#roundToast .q{ display:block }
+#roundToast .a{ display:block; margin-top:.15em; opacity:.95 }
+#roundToast .r{ display:block; margin-top:.35em; font-weight:1000 }
+#roundToast .r.ok{ color:var(--ok) }
+#roundToast .r.bad{ color:var(--bad) }
+
+#ansImg{
+  position:fixed; inset:0; width:100vw; height:100vh; object-fit:cover; object-position:center;
+  opacity:.95; filter: drop-shadow(0 20px 60px rgba(0,0,0,.50));
+  z-index:17499; display:none; pointer-events:none;
+}
+
+/* ===== กล้อง/แคนวาส AR ===== */
+#cameraMirror{ position:fixed; inset:0; width:100vw; height:100vh; object-fit:cover; transform: scaleX(-1); z-index:1; display:none; background:#000 }
+#camCanvas{ position:fixed; inset:0; width:100vw; height:100vh; z-index:2; pointer-events:none; display:none }
+#game{ z-index:3; position:relative }
+
+/* ปุ่ม Mute / Fullscreen (ดันมาอยู่หน้าสุด) */
+#muteBtn, #fsBtn{
+  position: fixed;
+  right: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.45);
+  border: 1px solid rgba(255,255,255,.3);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 50000; /* สูงกว่า HUD และทุก overlay ในเกม */
+}
+#muteBtn{ bottom:12px }
+#fsBtn{ bottom:62px }
+
+
+/* มุมภาพประดับ (มีไฟล์ก็บังไว้ได้) */
+body::after{ content:""; position:fixed; top:0; left:0; width:var(--corner-img-w, 220px); height:var(--corner-img-h, 220px); background:url("image/button1.png") no-repeat left top / contain; pointer-events:none; z-index:10000 }
+body::before{ content:""; position:fixed; top:0; right:0; width:var(--corner2-img-w, 200px); height:var(--corner2-img-h, 200px); background:url("image/button2.png") no-repeat right top / contain; pointer-events:none; z-index:10000 }
+
+/* ===== คะแนนลอยขึ้น (+1 / -1) ===== */
+.fly-score{
+  position:fixed;
+  left:0; top:0;
+  font-weight:1000;
+  font-size:clamp(28px, 4vw, 54px);
+  pointer-events:none;
+  z-index:20000;
+  opacity:0;
+  transform:translate(-50%,-10px);
+  animation:flyUp 900ms ease-out forwards;
+  text-shadow:0 4px 14px rgba(0,0,0,.45);
+}
+.fly-score.ok{ color:#10b981; }   /* เขียว */
+.fly-score.bad{ color:#ef4444; }  /* แดง  */
+
+@keyframes flyUp{
+  0%   { opacity:0; transform:translate(-50%, 10px) scale(.96); }
+  15%  { opacity:1; transform:translate(-50%, 0)    scale(1); }
+  100% { opacity:0; transform:translate(-50%, -60px) scale(1.06); }
+}
+
+/* ===== เอฟเฟกต์หมุน + จางหายของวงกลม ===== */
+.option.circle.flip-out {
+  animation: flipOut 600ms ease forwards;
+}
+
+@keyframes flipOut {
+  0%   { transform: rotateY(0deg) scale(1); opacity:1; }
+  50%  { transform: rotateY(180deg) scale(1.1); opacity:0.9; }
+  100% { transform: rotateY(360deg) scale(0.8); opacity:0; }
+}
+
+#timebarWrap{ display:none !important }
+
+/* จางหายเรียบ ๆ */
+.option.circle.fade-out {
+  animation: fadeOut 600ms ease forwards;
+}
+
+@keyframes fadeOut {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+
+
+/* ตำแหน่งอิสระของข้อความ/รูป (ปรับค่าเลขได้ตามใจ) */
+:root{
+  --qTop: 8vh;    /* ขยับระยะห่างจากขอบบนของจอ ~8% สูงจอ */
+  --qLeft: 50%;
+  --qFontMin: 24px;
+  --qFontVW:  25vw;
+  --qFontMax: 100px;
+}
+
+@media (max-width:420px){
+  .option.circle { --c-sz: clamp(110px, 28vw, 180px); }
+}
+
+.option.circle {
+  overflow: visible;
+  contain: layout paint;
+}
+
+.fx{
+  --fxX: 0;
+  --fxY: 0;
+  --fxS: 1;
+  will-change: transform, opacity;
+  transition: transform 520ms cubic-bezier(.2,.9,.2,1), opacity 520ms;
+}
+/* เข้า: slide-in จากบน */
+.in-pre { opacity:0; --fxY: -40px; }
+.in-go  { opacity:1; --fxY: 0;     }
+/* ออก: ตามทิศที่เลือก */
+.out-left  { opacity:0; --fxX: -90px; }
+.out-right { opacity:0; --fxX:  90px; }
+
+/* === สีวงกลมด่าน 2 ให้เหมือนด่านแรก === */
+.option.circle.choiceA {
+  background: rgba(0,0,0,.55);
+  border: 10px solid #a855f7;   /* ม่วงเหมือน .non */
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+}
+.option.circle.choiceB {
+  background: rgba(0,0,0,.55);
+  border: 10px solid #d97706;   /* ส้มเหมือน .live */
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+}
+
+.hud {
+  position: initial !important;   /* ยกเลิก fixed ของกล่องรวม */
+  inset: auto !important;         /* ล้างค่า inset เดิม */
+}
+
+.hud .left,
+.hud .right {
+  position: fixed !important;
+  top: var(--hud-top) !important;   /* ใช้ตัวแปรขยับขึ้น/ลงได้ */
+  z-index: 40000 !important;  /* ให้แขนซ้าย/ขวาอยู่บนสุดเหมือนกัน */
+  pointer-events: none;
+}
+
+.hud .left { left: 20px !important; }
+.hud .right { right: 20px !important; }
+
+.hud .btn-mini {
+  pointer-events: auto;   /* ให้ปุ่มกดได้ตามปกติ */
+}
+
+/* ===== Result Panel (สรุปคะแนนสวย ๆ) ===== */
+.result-panel{
+  --panel-bg: rgba(20,20,20,.92);
+  --panel-br: 20px;
+  --panel-bd: 1px solid rgba(255,255,255,.12);
+  --shadow: 0 20px 60px rgba(0,0,0,.55);
+  background: var(--panel-bg);
+  border: var(--panel-bd);
+  padding: clamp(20px, 4vw, 32px);
+  border-radius: var(--panel-br);
+  width: min(92vw, 640px);
+  display: grid;
+  grid-template-rows: auto auto auto auto;
+  gap: clamp(12px, 2vw, 18px);
+  text-align: center;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+}
+
+.result-title{
+  margin: 0;
+  font-weight: 1000;
+  font-size: clamp(28px, 4.5vw, 44px);
+  letter-spacing: .2px;
+  text-shadow: 0 4px 14px rgba(0,0,0,.35);
+}
+
+.badge{
+  font-size: clamp(56px, 10vw, 120px);
+  line-height: 1;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,.45));
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+.result-metrics{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(10px, 2vw, 16px);
+  margin-top: 4px;
+}
+
+.metric{
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  padding: clamp(10px, 2vw, 16px);
+  box-shadow: 0 8px 26px rgba(0,0,0,.25) inset, 0 8px 24px rgba(0,0,0,.25);
+}
+
+.metric .label{
+  font-size: clamp(14px, 2.2vw, 18px);
+  opacity: .9;
+  margin-bottom: 4px;
+}
+
+.metric .value{
+  font-size: clamp(28px, 5.5vw, 52px);
+  font-weight: 1000;
+  line-height: 1;
+  letter-spacing: .3px;
+}
+
+/* ปุ่มใหญ่ขึ้น + สีชัด */
+.result-actions{
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.btn{
+  appearance: none;
+  border: none;
+  border-radius: 14px;
+  padding: clamp(10px, 2.2vw, 14px) clamp(16px, 3.5vw, 24px);
+  font-weight: 900;
+  font-size: clamp(16px, 2.8vw, 20px);
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(0,0,0,.35);
+  transition: transform .08s ease, filter .15s ease, box-shadow .15s ease;
+}
+
+.btn:active{ transform: translateY(1px) scale(.99); }
+
+/* ปุ่มหลัก: เข้ม + ไล่เฉดเล็กน้อย */
+.btn.strong{
+  color: #fff;
+  background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+  border: 1px solid rgba(255,255,255,.15);
+}
+.btn.strong:hover{ filter: brightness(1.08); }
+
+/* ปุ่มรอง: โปร่ง */
+.btn.ghost{
+  color: #fff;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.18);
+}
+.btn.ghost:hover{ filter: brightness(1.1); }
+
+
+</style>
+</head>
+<body>
+
+<!-- ==== AR Mirror ==== -->
+<video id="cameraMirror" playsinline muted></video>
+<canvas id="camCanvas"></canvas>
+
+<div id="game" aria-label="สนามเกม">
+  <div id="questionBox" aria-live="polite"></div>
+  <img id="qImg" alt="ภาพประกอบคำถาม" />
+</div>
+
+<!-- ===== Welcome (หน้าสุด) ===== -->
+<div id="welcome" role="dialog" aria-modal="true">
+  <div class="welcome-content">
+    <div class="brand"><img src="image/banner2.png" alt="Banner"></div>
+    <button id="enterBtn">เข้าสู่เกม</button>
+  </div>
+</div>
+
+<!-- ===== Landing ===== -->
+<div id="landing" role="dialog" aria-modal="true" class="hide">
+  <div class="brand"><img src="image/banner2.png" alt="Banner"></div>
+<div class="level-menu">
+  <button class="levelBtn" data-level="1">ประเภทของสิ่งมีชีวิต</button>
+  <button class="levelBtn" data-level="2">การจำแนกสัตว์</button>
+  <button class="levelBtn" data-level="3">ประเภทของสัตว์มีกระดูกสันหลัง</button>
+  <button class="levelBtn" id="guideBtn">กติกาการเล่น 📖</button>
+   </div>
+</div>
+
+<!-- ===== ภารกิจ / หน้าเริ่ม ===== -->
+<div id="startScreen">
+  <div id="startTitle">ภารกิจ : เลือกวงกลมคำตอบจำแนกสิ่งมีชีวิตให้ถูกต้อง</div>
+  <button id="startBtn">เริ่ม</button>
+  <div id="countdown">3</div>
+</div>
+
+<!-- ===== คู่มือ ===== -->
+<div id="guideScreen" style="display:none; position:fixed; inset:0; align-items:center; justify-content:center; background:url('image/background2.png') center/cover no-repeat; z-index:20001">
+  <div class="guide-wrap" style="width:min(95vw, 1200px); max-height:92vh; display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center">
+    <img src="image/guide.png" alt="คู่มือเกม" style="width:100%; height:auto; max-height:92vh; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.55); display:block">
+    <button id="guideBack" class="btn-mini">เมนูหลัก</button>
+  </div>
+</div>
+
+<!-- ===== HUD ===== -->
+<div class="hud">
+  <div class="left">
+    <div class="stack">
+      <div style="display:flex; gap:8px;">
+        <button id="quickRestart" class="btn-mini">หน้าหลัก</button>
+        <button id="pauseBtn" class="btn-mini">⏸ หยุด</button>
+        <button id="camBtn" class="btn-mini">📷: ปิด</button>
+      </div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="stack" style="align-items:flex-end">
+      <div class="score-label">คะแนน</div>
+      <div id="goldWrap" class="pill gold" aria-live="polite" title="คะแนน"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== แถบเวลา ===== -->
+<div id="timebarWrap"><div id="timebar"></div></div>
+<div id="flash"></div>
+<div id="roundToast"></div>
+<img id="ansImg" src="" alt="answer background">
+
+<!-- ===== ป๊อปอัปจบด่าน ===== -->
+<div id="overlay" style="visibility:hidden; opacity:0; transition:.25s; position:fixed; inset:0; display:grid; place-items:center; background:rgba(0,0,0,.55); z-index:9999">
+  <div class="result-panel">
+    <div class="badge" id="scoreBadge" aria-hidden="true">🏆</div>
+    <h1 class="result-title" id="endTitle">หมดเวลา</h1>
+
+<div class="result-metrics">
+  <div class="metric">
+    <div class="label">คะแนน</div>
+    <div class="value"><b id="finalScore">0</b></div>
+  </div>
+</div>
+
+    <div class="result-actions">
+      <button class="btn strong" id="restartBtn">เริ่มใหม่</button>
+      <button class="btn ghost" id="selectLevelBtn">กลับสู่หน้าหลัก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== เสียง ===== -->
+<audio id="hitSound" preload="auto" src="image/audio1.mp3"></audio>
+<audio id="winSound" preload="auto" src="image/win2.mp3"></audio>
+<audio id="bgm" preload="auto" loop src="image/bgm3.mp3"></audio>
+<audio id="selectSound" preload="auto" src="image/select.mp3"></audio>
+
+<!-- ===== ปุ่ม Mute / Fullscreen ===== -->
+<button id="muteBtn" aria-pressed="false" title="Mute / Unmute">🔊</button>
+<button id="fsBtn" aria-pressed="false" title="เข้าสู่โหมดเต็มจอ">⛶</button>
+
+<!-- ===== ควบคุม Mute ===== -->
+<script>
+(function(){
+  const muteBtn = document.getElementById('muteBtn');
+  if(!muteBtn) return;
+  let isMuted = false;
+  function applyMute(m){
+    isMuted = !!m;
+    document.querySelectorAll('audio').forEach(a => { a.muted = isMuted; if(isMuted){ a.setAttribute('muted',''); } else { a.removeAttribute('muted'); } });
+    muteBtn.setAttribute('aria-pressed', String(isMuted));
+    muteBtn.textContent = isMuted ? '🔇' : '🔊';
+  }
+  muteBtn.addEventListener('click', () => applyMute(!isMuted));
+})();
+</script>
+
+<!-- ===== ควบคุม Fullscreen ===== -->
+<script>
+(function(){
+  const fsBtn = document.getElementById('fsBtn');
+  if (!fsBtn) return;
+  function fsEnabled(){ return document.fullscreenEnabled || document.webkitFullscreenEnabled || document.msFullscreenEnabled }
+  function isFull(){ return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement }
+  function requestFS(){ const el=document.documentElement; (el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen)?.call(el) }
+  function exitFS(){ (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen)?.call(document) }
+  function render(){ const on=!!isFull(); fsBtn.setAttribute('aria-pressed', String(on)); fsBtn.title = on ? 'ออกจากโหมดเต็มจอ' : 'เข้าสู่โหมดเต็มจอ'; fsBtn.textContent = on ? '🗗' : '⛶' }
+  if (!fsEnabled()){ fsBtn.style.display='none'; return }
+  fsBtn.addEventListener('click', () => { if(isFull()) exitFS(); else requestFS() });
+  document.addEventListener('fullscreenchange', render);
+  document.addEventListener('webkitfullscreenchange', render);
+  document.addEventListener('msfullscreenchange', render);
+  render();
+})();
+</script>
+
+<!-- ===== ระบบเกม (2 วงกลมเท่านั้น) ===== -->
+<script>
+(()=>{
+
+  /* ---------- DOM ---------- */
+  const game = document.getElementById('game');
+  const qBox = document.getElementById('questionBox');
+  const qImg = document.getElementById('qImg');
+  const timebar = document.getElementById('timebar');
+  const timebarWrap = document.getElementById('timebarWrap');
+  const flash = document.getElementById('flash');
+  const toast = document.getElementById('roundToast');
+
+/* ===== Clock UI for existing game timer ===== */
+const clockEl = document.createElement('div');
+clockEl.id = 'clock';
+clockEl.className = 'clock-pill';
+clockEl.textContent = '02:00';               // ค่าเริ่มต้นตาม GAME_DURATION_MS
+document.body.appendChild(clockEl);
+
+let clockUIItv = null;        // interval สำหรับอัปเดตตัวเลข
+let clockState = 'idle';       // 'idle' | 'run' | 'pause' | 'end'
+
+function fmtClock(ms){
+  const total = Math.max(0, Math.ceil(ms/1000));
+  const m = String(Math.floor(total/60)).padStart(2,'0');
+  const s = String(total % 60).padStart(2,'0');
+  return m + ':' + s;
+}
+function renderClockFromGame(){
+  // ใช้ตัวแปรของ "ตัวจับเวลาเดิม": remainingMs, gameEndAt, ended
+  const ms = (clockState === 'run')
+    ? Math.max(0, (gameEndAt - performance.now()))
+    : remainingMs; // pause/idle ใช้ค่าที่พักไว้
+  clockEl.textContent = fmtClock(ms);
+}
+function startClockUI(){
+  clockState = 'run';
+  if (!clockUIItv) clockUIItv = setInterval(renderClockFromGame, 250);
+  renderClockFromGame();
+}
+function pauseClockUI(){
+  clockState = 'pause';
+  if (clockUIItv){ clearInterval(clockUIItv); clockUIItv = null; }
+  renderClockFromGame();
+}
+function resumeClockUI(){
+  clockState = 'run';
+  if (!clockUIItv) clockUIItv = setInterval(renderClockFromGame, 250);
+  renderClockFromGame();
+}
+function stopClockUI(){
+  clockState = 'end';
+  if (clockUIItv){ clearInterval(clockUIItv); clockUIItv = null; }
+  renderClockFromGame();
+}
+function resetClockUI(){
+  clockState = 'idle';
+  if (clockUIItv){ clearInterval(clockUIItv); clockUIItv = null; }
+  // เซ็ตตัวเลขตามค่าเริ่มต้นของ GAME_DURATION_MS
+  clockEl.textContent = fmtClock(GAME_DURATION_MS);
+}
+
+
+  const overlay = document.getElementById('overlay');
+  const finalScoreEl = document.getElementById('finalScore');
+  const finalRoundsEl = document.getElementById('finalRounds');
+  const restartBtn = document.getElementById('restartBtn');
+  const selectLevelBtn = document.getElementById('selectLevelBtn');
+
+    window.currentLevel = 1; // เริ่มที่ด่าน 1
+
+
+
+  // Welcome -> Landing
+  (function(){
+    const welcome = document.getElementById('welcome');
+    const enterBtn = document.getElementById('enterBtn');
+    const landing = document.getElementById('landing');
+
+ enterBtn.addEventListener('click', ()=>{ 
+    welcome.classList.add('hide'); 
+    landing.classList.remove('hide');
+    bgm?.play?.().catch(()=>{}); 
+ });
+  })();
+
+function renderGold(score){
+  const n = Number(score) || 0;
+  goldWrap.innerHTML = `<span class="num">${n}</span>`;
+  goldWrap.setAttribute('aria-label', `คะแนน ${n}`);
+}
+
+// ตัวอย่าง ปรับตอนโหลด
+if (window.innerWidth < 480) {
+  goldWrap.style.setProperty('--score-size', '28px');
+}
+// หรือจะตั้งตามด่าน/โหมดก็ได้
+
+  // เสียง
+  const hitSound = document.getElementById('hitSound');
+  const winSound = document.getElementById('winSound');
+  const bgm = document.getElementById('bgm');
+  const selectSound = document.getElementById('selectSound');
+
+  if (bgm) {
+    bgm.loop = true;
+    bgm.addEventListener('ended', () => {
+      try {
+        bgm.currentTime = 0;
+        bgm.play()?.catch(()=>{});
+      } catch (_) {}
+    });
+  }
+
+  const VOL_BGM=0.35, VOL_SELECT=0.75, VOL_HIT=0.75, VOL_WIN=0.85;
+
+
+  function applyBackendVolume(){ if(bgm)bgm.volume=VOL_BGM; if(selectSound)selectSound.volume=VOL_SELECT; if(hitSound)hitSound.volume=VOL_HIT; if(winSound)winSound.volume=VOL_WIN; } applyBackendVolume();
+  function isGlobalMuted(){ const a=document.querySelector('audio'); return !!a && a.muted===true }
+  function playSfx(el,vol){ try{ const n=el?.cloneNode(true); if(!n)return; n.volume=(typeof vol==='number')?Math.max(0,Math.min(1,vol)):(el.volume??1); n.muted=isGlobalMuted(); n.play?.(); }catch(_){} }
+
+  // util
+  const rand=(min,max)=>Math.floor(Math.random()*(max-min+1))+min;
+  const pick=(arr)=>arr[rand(0,arr.length-1)];
+  const shuffle=(arr)=>{ const A=arr.slice(); for(let i=A.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [A[i],A[j]]=[A[j],A[i]] } return A };
+
+/* ===== คะแนนลอยขึ้น (+1/-1) ===== */
+function flyScoreAt(x, y, ok){
+  const sp = document.createElement('div');
+  sp.className = 'fly-score ' + (ok ? 'ok' : 'bad');
+  sp.textContent = ok ? '+1' : '-1';
+  sp.style.left = x + 'px';
+  sp.style.top  = y + 'px';
+  document.body.appendChild(sp);
+  sp.addEventListener('animationend', ()=> sp.remove(), {once:true});
+}
+
+function flyScoreForEl(el, ok){
+  // แสดงที่กลางจอเสมอ
+  flyScoreAt(innerWidth / 2, innerHeight / 2, ok);
+}
+
+  /* ---------- สถานะเกม ---------- */
+
+/* === [เพิ่มใหม่] ตัวจับเวลาเกมแบบทั้งด่าน 2 นาที ไม่แสดงผล === */
+const GAME_DURATION_MS = 120000; // 2 นาที
+let gameTimerId = null;
+let gameEndAt = 0;
+let remainingMs = GAME_DURATION_MS;
+
+function clearGameTimer(){
+  if (gameTimerId){ clearTimeout(gameTimerId); gameTimerId = null; }
+}
+
+function scheduleGameTimer(ms){
+  clearGameTimer();
+  gameTimerId = setTimeout(()=>{
+    // ครบเวลา → จบด่านทันที (สรุปคะแนน)
+    if(!ended){ endLevel(); }
+  }, Math.max(0, ms|0));
+}
+
+function startGameTimer(){
+  remainingMs = GAME_DURATION_MS;
+  gameEndAt = performance.now() + remainingMs;
+  scheduleGameTimer(remainingMs);
+startClockUI();     // เริ่มโชว์นาฬิกานับถอยหลังจากตัวจับเวลาเดิม
+}
+
+function pauseGameTimer(){
+  if (gameTimerId){
+    remainingMs = Math.max(0, gameEndAt - performance.now());
+    clearGameTimer();
+       pauseClockUI();     // พักการอัปเดตตัวเลข (ใช้ remainingMs ค้างไว้)
+  }
+}
+
+function resumeGameTimer(){
+  if (remainingMs > 0 && !ended){
+    gameEndAt = performance.now() + remainingMs;
+    scheduleGameTimer(remainingMs);
+        resumeClockUI();    // เดินนาฬิกาต่อ
+  }
+}
+
+  const BLANK_MS=800, Q_DROP_MS=600, Q_HOLD_MS=400, OPT_IN_MS=200, RESULT_MS=1000;
+
+  let running=false, ended=false, paused=false;
+  window.ended = ended; // ✅ sync ค่าเริ่มต้นไปยัง global
+  let score=0, round=0;
+  let roundTimer=null, timeLeft=0, awaitingAnswer=false;
+
+
+  // เลื่อนวงกลมขึ้นลงเป็นช่วง ๆ
+  let driftTimers = [];
+  function clearDrifts(){ driftTimers.forEach(id=>clearInterval(id)); driftTimers=[]; }
+  function clearRoundObjects(){ 
+          clearDrifts(); document.querySelectorAll('.option').forEach(n=>n.remove()); 
+}
+
+// คืนสนามเกมให้พร้อมเล่นใหม่
+function restorePlayfield(){
+  game.style.visibility = 'visible';
+  qBox.style.display    = 'block';
+}
+
+
+// หยุด/ซ่อนสนามเกมทั้งหมด ระหว่างหน้าสรุปคะแนน
+function freezePlayfield(on){
+  awaitingAnswer = false;           // ห้ามตอบต่อ
+  stopTimebar();                    // กันแถบเวลา (ถ้ามี)
+  clearRoundObjects();              // ลบวงกลม + เคลียร์ interval เคลื่อนที่
+  // ซ่อน/ล้างคำถามและรูป
+  qBox.textContent = '';
+  qBox.style.display = on ? 'none' : 'block';
+  if (qImg){
+    qImg.style.display = on ? 'none' : 'block';
+    if(on) qImg.removeAttribute('src');
+  }
+  // ซ่อนทั้งสนามเกม (กันเห็นของวิ่งอยู่ข้างหลัง overlay)
+  game.style.visibility = on ? 'hidden' : 'visible';
+}
+
+
+
+  function updateHUD(){ renderGold(score); 
+}
+
+function resetState(){ 
+  // ปิดสถานะการรันเกมทันที
+  running = false;
+  ended   = true;
+    window.ended = ended; // ✅ อัปเดตค่า global
+  paused  = false;
+
+  // ยกเลิกตัวจับเวลาทุกรอบ/การสุ่มคำถามที่อาจยังค้าง
+  clearRoundObjects();
+  clearGameTimer();
+  if (roundTimer){ clearInterval(roundTimer); roundTimer = null; }
+
+  // รีเซ็ต UI/ตัวแปร
+  document.body.classList.remove('in-game');
+  score = 0;
+  round = 0;
+  timeLeft = 0;
+  awaitingAnswer = false;
+  updateHUD();
+
+  // ล้างคำถาม/ภาพ
+  qBox.textContent = '';
+  qBox.style.top = '-160px';
+  qBox.style.display = 'none';
+  if (qImg) {
+    qImg.style.display = 'none';
+    qImg.removeAttribute('src');
+  }
+
+  stopTimebar();
+  resetClockUI();
+  game.style.visibility = 'visible';   // เผื่อถูกซ่อนไว้ตอนจบเกม
+}
+
+
+  function showToast(payload){
+    const ansImg = document.getElementById('ansImg');
+    const data = (typeof payload === 'object' && payload) ? payload : { q:String(payload||''), a:'', ok:false };
+    const { q='', a='', ok=false } = data;
+    const esc = (s)=> String(s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    toast.innerHTML = `<span class="q">${esc(q)}</span><span class="a">${esc(a||'—')}</span><span class="r ${ok?'ok':'bad'}">${ok?'ถูกต้อง':'ไม่ถูกต้อง'}</span>`;
+    toast.style.display='inline-block';
+    if(ansImg){ ansImg.onerror=()=>{ansImg.style.display='none'}; ansImg.src='image/ans1.png'; ansImg.style.display='block'; }
+    const playFlashIn = (el,cover=false)=>{ if(!el)return; el.classList.remove('flash-in','flash-in-cover'); void el.offsetWidth; el.classList.add(cover?'flash-in-cover':'flash-in'); el.addEventListener('animationend',()=>el.classList.remove('flash-in','flash-in-cover'),{once:true}); };
+    playFlashIn(ansImg,true); playFlashIn(toast,false);
+    setTimeout(()=>{ toast.style.display='none'; if(ansImg) ansImg.style.display='none'; }, RESULT_MS);
+  }
+
+// ตัดระบบแถบเวลา + ตัวจับเวลาออก
+function startTimebar(){}                 // no-op
+function stopTimebar(){}                  // no-op
+function updateTimebar(){}                // no-op
+
+function dropQuestion(text, imgSrc){
+  // ข้อความ
+  qBox.textContent = String(text);
+
+  // รีเซ็ตของค้างจากรอบก่อน
+  qBox.style.transition = '';
+  qImg.style.transition = '';
+  qBox.style.opacity = '';
+  qImg.style.opacity = '';
+  qBox.style.pointerEvents = 'auto';
+  qBox.style.top = 'var(--qTop)';
+  qBox.style.display = 'block';
+
+  // ซ่อนข้อความไว้จนกว่ารูปจะพร้อม
+  qBox.style.visibility = 'hidden';
+
+  // รีเซ็ตคลาส FX
+  qBox.classList.remove('out-left','out-right','in-go','in-pre');
+  qImg.classList.remove('out-left','out-right','in-go','in-pre');
+  qImg.classList.add('fx','in-pre');   // qBox ไม่มี fx/in-pre แล้ว
+
+  // รูปภาพ
+  if (qImg){
+    if (imgSrc){
+      qImg.style.display = 'none';
+
+      const startIn = () => {
+        qImg.style.display = 'block';
+        qBox.style.visibility = 'visible';  // ✅ โชว์ข้อความเมื่อรูปพร้อมแล้ว
+        requestAnimationFrame(() => {
+          // ใส่คลาสเข้าให้รูป (และจะใส่ให้ qBox ถ้าต้องการเอฟเฟกต์ข้อความด้วย)
+          qImg.classList.add('in-go');
+          // ถ้าอยากให้ข้อความนิ่ง ๆ ไม่ต้องใส่ in-go ให้ qBox
+          // qBox.classList.add('in-go');
+        });
+      };
+      const textOnly = () => {
+        qImg.style.display = 'none';
+        qBox.style.visibility = 'visible';   // ✅ รูปไม่มา แต่ปล่อยข้อความได้
+        // ถ้าอยากให้ข้อความนิ่ง ๆ ก็คงไว้แบบไม่มี in-go
+        // requestAnimationFrame(() => qBox.classList.add('in-go'));
+      };
+
+      qImg.onload  = startIn;
+      qImg.onerror = textOnly;
+      qImg.src = imgSrc;
+
+      // เผื่อรูป cache แล้ว
+      if (qImg.complete && qImg.naturalWidth > 0) startIn();
+
+    } else {
+      // ไม่มีรูป → แสดงข้อความทันที
+      qImg.style.display = 'none';
+      qImg.removeAttribute('src');
+      qBox.style.visibility = 'visible';
+      // requestAnimationFrame(() => qBox.classList.add('in-go')); // ถ้าอยากมีเอฟเฟกต์
+    }
+  }
+}
+
+
+  /* ---------- ตัวเลือก 2 วงกลมด้านซ้าย/ขวา ---------- */
+  function clearOptionGlows(){ document.querySelectorAll('.option.circle.glow').forEach(n=>n.classList.remove('glow')); }
+  function glowGold(el){ if(!el) return; el.classList.add('glow'); }
+
+  function spawnTwoCircles(correctTag /* 'living'|'non' */){
+    const SIDE_W = innerWidth / 3;
+    const PAD = 16;
+    const order = Math.random()<0.5 ? ['left','right'] : ['right','left'];
+    const defs = [
+      { key:'non',    text:'สิ่งไม่มีชีวิต', cls:'non',  side:order[0] },
+      { key:'living', text:'สิ่งมีชีวิต',     cls:'live', side:order[1] },
+    ];
+    defs.forEach(def=>{
+      const el = document.createElement('div');
+            // เพิ่มคลาส in-anim เพื่อให้เล่นเอฟเฟกต์เข้า
+            el.className = `option circle ${def.cls} in-anim`;
+
+      el.dataset.correct = String(def.key === correctTag);
+            el.dataset.side = def.side; 
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = def.text;
+      el.appendChild(label);
+      game.appendChild(el);
+
+// ===== วัดขนาดจริงแบบไม่โดน transform แล้วค่อยวาง =====
+const SAFE_PAD = 12; // ขอบปลอดภัยรอบจอ
+
+// ถอด transform ชั่วคราวเพื่อวัดขนาดจริง
+const prevTransform = el.style.transform;
+el.style.transform = 'none';
+
+const cs = getComputedStyle(el);
+// ขนาดวงกลมจากตัวแปร --c-sz (ไม่รวม border)
+const core = parseFloat(cs.getPropertyValue('--c-sz')) || parseFloat(cs.width) || 180;
+// ความหนาขอบรวมซ้ายขวา
+const border =
+  (parseFloat(cs.borderLeftWidth)  || 0) +
+  (parseFloat(cs.borderRightWidth) || 0);
+
+// ขนาดจริงเมื่อ scale(1)
+const realSize = Math.round(core + border);
+
+// คืน transform เดิม + ปล่อยให้ in-anim ทำงานต่อ
+el.style.transform = prevTransform;
+
+// โซนคงที่แนวตั้ง (กันหัวท้าย)
+const yMin = 110;
+const yMax = Math.max(140, innerHeight - realSize - SAFE_PAD);
+
+// โซนแนวนอนซ้าย/ขวาแบบ “ไม่เกิน 1/3 จอ” และไม่ให้ล้น
+const totalMaxX = innerWidth - realSize - SAFE_PAD;
+
+// เริ่ม-จบโซน 1/3 ซ้าย/ขวา
+const leftZoneStart  = SAFE_PAD;
+const leftZoneEnd    = Math.max(SAFE_PAD, Math.min(totalMaxX, (innerWidth / 3) - SAFE_PAD));
+
+const rightZoneStart = Math.max(SAFE_PAD, Math.min(totalMaxX, Math.ceil((innerWidth * 2) / 3)));
+const rightZoneEnd   = totalMaxX;
+
+// เลือกช่วงตามฝั่ง
+let xMin, xMax;
+if (def.side === 'left') {
+  xMin = leftZoneStart;
+  xMax = leftZoneEnd - realSize; // กันขอบจริง
+} else {
+  xMin = rightZoneStart;
+  xMax = rightZoneEnd;
+}
+
+// ถ้าจอแคบจนช่วงติดลบ → ใช้ช่วงทั้งจอ
+if (!isFinite(xMin) || !isFinite(xMax) || xMin > xMax) {
+  xMin = SAFE_PAD;
+  xMax = totalMaxX;
+}
+
+// ตั้งค่าตำแหน่งเริ่มต้นปลอดภัย
+const nx0 = Math.round(xMin + Math.random() * Math.max(0, xMax - xMin));
+const ny0 = Math.round(yMin + Math.random() * Math.max(0, yMax - yMin));
+el.style.left = nx0 + 'px';
+el.style.top  = ny0 + 'px';
+
+// ให้เคลื่อนแบบสุ่ม โดยยังคงอยู่ในช่วงปลอดภัย
+const id = setInterval(() => {
+  const nx = Math.round(xMin + Math.random() * Math.max(0, xMax - xMin));
+  const ny = Math.round(yMin + Math.random() * Math.max(0, yMax - yMin));
+  el.style.left = nx + 'px';
+  el.style.top  = ny + 'px';
+}, 3000 + Math.random() * 1300);
+driftTimers.push(id);
+
+
+      el.addEventListener('click', ()=> tryAnswer(el));
+    });
+  }
+
+  // ===== [LEVEL 1] วงกลม 2 ช้อยส์จากคำตอบรายข้อ =====
+function spawnTwoAnswerCircles(choices, correctIndex){
+  const order = Math.random()<0.5 ? ['left','right'] : ['right','left'];
+  const defs = [
+    { idx:0, text: choices[0], side: order[0], cls:'choiceA' },
+    { idx:1, text: choices[1], side: order[1], cls:'choiceB' },
+  ];
+  defs.forEach(def=>{
+    const el = document.createElement('div');
+    el.className = `option circle in-anim ${def.cls}`;  // << ใช้คลาส ไม่ใช้ style.border
+    el.dataset.side = def.side;
+    el.dataset.correct = String(def.idx === correctIndex);
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = def.text;
+    el.appendChild(label);
+    game.appendChild(el);
+
+    // ===== โค้ดคำนวณตำแหน่ง/การเคลื่อนที่ (เหมือนเดิม) =====
+    const SAFE_PAD = 12;
+    const prevTransform = el.style.transform;
+    el.style.transform = 'none';
+    const cs = getComputedStyle(el);
+    const core = parseFloat(cs.getPropertyValue('--c-sz')) || parseFloat(cs.width) || 180;
+    const border = (parseFloat(cs.borderLeftWidth)||0)+(parseFloat(cs.borderRightWidth)||0);
+    const realSize = Math.round(core + border);
+    el.style.transform = prevTransform;
+
+    const yMin = 110;
+    const yMax = Math.max(140, innerHeight - realSize - SAFE_PAD);
+    const totalMaxX = innerWidth - realSize - SAFE_PAD;
+
+    const leftZoneStart  = SAFE_PAD;
+    const leftZoneEnd    = Math.max(SAFE_PAD, Math.min(totalMaxX, (innerWidth / 3) - SAFE_PAD));
+    const rightZoneStart = Math.max(SAFE_PAD, Math.min(totalMaxX, Math.ceil((innerWidth * 2) / 3)));
+    const rightZoneEnd   = totalMaxX;
+
+    let xMin, xMax;
+    if (def.side === 'left'){ xMin = leftZoneStart; xMax = leftZoneEnd - realSize; }
+    else { xMin = rightZoneStart; xMax = rightZoneEnd; }
+    if (!isFinite(xMin) || !isFinite(xMax) || xMin > xMax){ xMin = SAFE_PAD; xMax = totalMaxX; }
+
+    const nx0 = Math.round(xMin + Math.random() * Math.max(0, xMax - xMin));
+    const ny0 = Math.round(yMin + Math.random() * Math.max(0, yMax - yMin));
+    el.style.left = nx0 + 'px';
+    el.style.top  = ny0 + 'px';
+
+    const id = setInterval(()=>{
+      const nx = Math.round(xMin + Math.random() * Math.max(0, xMax - xMin));
+      const ny = Math.round(yMin + Math.random() * Math.max(0, yMax - yMin));
+      el.style.left = nx + 'px';
+      el.style.top  = ny + 'px';
+    }, 1200 + Math.random()*800);
+    driftTimers.push(id);
+
+    el.addEventListener('click', ()=> tryAnswer(el));
+  });
+}
+
+
+function tryAnswer(el){
+    if (ended) return;   // ❗ จบเกมแล้ว ห้ามกดตอบ
+  if(!awaitingAnswer) return;
+  const ok = (el.dataset.correct === 'true');
+  awaitingAnswer=false;
+
+  // เอฟเฟกต์ปุ่มเดิม (หมุน/หาย)
+  el.classList.add('flip-out');
+  el.addEventListener('animationend', ()=> {
+    if(el && el.parentNode){ el.remove(); }
+  }, {once:true});
+
+  // ✅ ปุ่มที่ไม่ถูกเลือก → fade-out พร้อมกัน
+  document.querySelectorAll('.option.circle').forEach(btn=>{
+    if(btn !== el){
+      btn.classList.add('fade-out');
+      btn.addEventListener('animationend', ()=> btn.remove(), {once:true});
+    }
+  });
+
+  // ===== NEW: สไลด์ qBox + qImg ออกไปทิศทางที่เลือก แล้ว "รอ" ให้จบก่อน =====
+  const side = el.dataset.side || ((el.getBoundingClientRect().left < innerWidth/2) ? 'left' : 'right');
+
+  // รีเซ็ตสถานะเข้า แล้วสั่งออก
+  qBox.classList.remove('in-pre','in-go','out-left','out-right');
+  qImg.classList.remove('in-pre','in-go','out-left','out-right');
+  qBox.classList.add('fx', side==='left' ? 'out-left' : 'out-right');
+  qImg.classList.add('fx', side==='left' ? 'out-left' : 'out-right');
+
+  // รอ transition ของทั้ง qBox และ qImg (มี timeout กันพลาด)
+  waitForBothTransitions([qBox, qImg], 600).then(()=>{
+    // จบเอฟเฟกต์แล้ว ค่อยไปสรุปผลรอบ
+    endRound(ok, el, false);
+  });
+
+  try{ (selectSound?.cloneNode(true)).play?.() }catch(_){}
+}
+
+/* Helper: รอจนกว่าทุก element จะยิง 'transitionend' อย่างน้อย 1 ครั้ง หรือครบ timeout (ms) */
+function waitForBothTransitions(els, timeoutMs=600){
+  const once = (node, type) => new Promise(res=>{
+    let done=false;
+    const h = ()=>{ if(!done){ done=true; node.removeEventListener(type,h); res(); } };
+    node.addEventListener(type, h, {once:true});
+    // กันกรณีไม่มี transition หรือคลาสซ้ำเดิม
+    setTimeout(h, timeoutMs);
+  });
+  return Promise.all( (els||[]).map(n=> once(n,'transitionend')) );
+}
+
+
+  function endRound(ok, pickedElOrNull, timeout=false){
+  clearInterval(roundTimer); stopTimebar();
+  try{ (hitSound?.cloneNode(true)).play?.() }catch(_){}
+
+  // อัปเดตคะแนนก่อน แล้วทำเอฟเฟกต์ตัวเลขลอย
+if (ok) {
+  score += 1;     // ตอบถูก +1
+} else {
+  score -= 1;     // ตอบผิด -1
+}
+updateHUD();
+flyScoreForEl(pickedElOrNull || null, ok); // แสดง +1/-1 ตรงกลางจอเหมือนเดิม
+
+
+  // ไม่ต้องแสดง ansImg / roundToast / flash อีกต่อไป
+  setTimeout(()=>{
+    // เก็บกวาดรอบเดิม
+    const hide = (el)=>{ if(!el) return; el.style.transition='none'; el.style.opacity='0'; el.style.pointerEvents='none'; };
+    hide(qBox);
+    document.querySelectorAll('.option').forEach(hide);
+    timebarWrap.style.opacity='0';
+
+    // เคลียร์ของเก่าและไปรอบถัดไป
+    clearRoundObjects(); 
+    qBox.textContent=''; 
+    qBox.style.opacity='1'; 
+    timebarWrap.style.opacity='1';
+
+    round++; updateHUD();
+    if(qImg){ qImg.style.display='none'; qImg.removeAttribute('src'); }
+
+    // ไม่จบด้วยคะแนน/จำนวนรอบอีกต่อไป — เล่นวนไปจนกว่าจะครบ 2 นาที
+    nextRound();
+
+  }, 600); // เว้นจังหวะให้เห็นเลขลอย
+}
+
+
+ /* ---------ผูกรูปภาพ--------- */
+const FIXED_IMG_MAP = {
+  "ปลาหมอ":     "vertebrates/animal1.png",
+  "ปลาเก๋า":     "vertebrates/animal2.png",
+  "ปลาชะโด":    "vertebrates/animal3.png",
+  "ปลาการ์ตูน":  "vertebrates/animal4.png",
+  "ปลาทูน่า":   "vertebrates/animal5.png",
+  "ปลาไหล":     "vertebrates/animal6.png",
+  "ฉลาม":       "vertebrates/animal7.png",
+  "ปลาทอง":     "vertebrates/animal8.png",
+  "อึ่งอ่าง":       "vertebrates/animal9.png",
+  "ซาลาแมนเดอร์":  "vertebrates/animal10.png",
+  "คางคก":         "vertebrates/animal11.png",
+  "เขียด":         "vertebrates/animal12.png",
+  "กบ":            "vertebrates/animal13.png",
+  "แอกโซลอเติล":   "vertebrates/animal14.png",
+  "เขียดงู":       "vertebrates/animal15.png",
+  "จระเข้":        "vertebrates/animal16.png",
+  "เต่า":          "vertebrates/animal17.png",
+  "จิ้งจก":        "vertebrates/animal18.png",
+  "กิ้งก่า":       "vertebrates/animal19.png",
+  "งู":            "vertebrates/animal20.png",
+  "อิกัวนา":       "vertebrates/animal21.png",
+  "มังกรโคโมโด":   "vertebrates/animal22.png",
+  "ตัวเงินตัวทอง": "vertebrates/animal23.png",
+  "ไก่":         "vertebrates/animal24.png",
+  "เป็ด":        "vertebrates/animal25.png",
+  "นกพิราบ":     "vertebrates/animal26.png",
+  "นกฮูก":       "vertebrates/animal27.png",
+  "อีกา":        "vertebrates/animal28.png",
+  "นกอินทรี":    "vertebrates/animal29.png",
+  "นกกระจอกเทศ": "vertebrates/animal30.png",
+  "นกฟลามิงโก":  "vertebrates/animal31.png",
+  "นกเงือก":     "vertebrates/animal32.png",
+  "นกแก้ว":     "vertebrates/animal33.png",
+  "วัว":        "vertebrates/animal34.png",
+  "สิงโต":      "vertebrates/animal35.png",
+  "วาฬ":        "vertebrates/animal36.png",
+  "โลมา":      "vertebrates/animal37.png",
+  "ลิงกอริลา":  "vertebrates/animal38.png",
+  "ม้าลาย":     "vertebrates/animal39.png",
+  "ฮิปโป":     "vertebrates/animal40.png",
+  "ช้าง":       "vertebrates/animal41.png",
+  "หมีแพนด้า":  "vertebrates/animal42.png",
+  "หมู":        "vertebrates/animal43.png",
+  "เสือ":       "vertebrates/animal44.png",
+  "หนู":        "vertebrates/animal45.png",
+  "ควาย":      "vertebrates/animal46.png",
+  "คน":        "vertebrates/animal47.png",
+
+  "หอยทาก":      "invertebrates/animal48.png",
+  "ผีเสื้อ":      "invertebrates/animal49.png",
+  "ยุง":          "invertebrates/animal50.png",
+  "หนอน":        "invertebrates/animal51.png",
+  "ไส้เดือน":     "invertebrates/animal52.png",
+  "หอย":         "invertebrates/animal53.png",
+  "มด":          "invertebrates/animal54.png",
+  "แมลงเต่าทอง":  "invertebrates/animal55.png",
+  "กุ้ง":         "invertebrates/animal56.png",
+  "ปลาหมึก":     "invertebrates/animal57.png",
+  "แมงมุม":       "invertebrates/animal58.png",
+  "ปู":          "invertebrates/animal59.png",
+  "ตุ๊กแก":       "invertebrates/animal60.png",
+  "ดาวทะเล":     "invertebrates/animal61.png",
+  "เม่นทะเล":     "invertebrates/animal62.png",
+  "ฟองน้ำ":      "invertebrates/animal63.png",
+  "แมงกะพรุน":    "invertebrates/animal64.png",
+  "พยาธิใบไม้":   "invertebrates/animal65.png",
+  "พลานาเรีย":    "invertebrates/animal66.png",
+  "ตะขาบ":       "invertebrates/animal67.png",
+  "พยาธิตัวกลม":  "invertebrates/animal68.png",
+
+  "เห็ด":            "invertebrates/animal69.png",
+  "รา":             "invertebrates/animal70.png",
+  "แบคทีเรีย":       "invertebrates/animal71.png",
+  "อะมีบา":          "invertebrates/animal72.png",
+  "ซายาโนแบคทีเรีย": "invertebrates/animal73.png",
+  "แลคโตบาซิลลัส":   "invertebrates/animal74.png",
+  "เห็ดนางรม":       "invertebrates/animal75.png",
+  "อี โคไล":         "invertebrates/animal76.png",
+
+
+  "ต้นไม้":          "image/plant1.png",
+  "สาหร่าย":        "image/plant2.png",
+  "ต้นไผ่":         "image/plant3.png",
+  "เฟิร์น":         "image/plant4.png",
+  "ถั่วงอก":        "image/plant5.png",
+  "ผัก":            "image/plant6.png",
+  "หญ้า":          "image/plant7.png",
+  "ต้นกระบอกเพชร":  "image/plant8.png",
+  "ต้นข้าว":        "image/plant9.png",
+  "กล้วยไม้":       "image/plant10.png",
+  "ต้นดอกทานตะวัน": "image/plant11.png",
+  "ต้นสน":          "image/plant12.png",
+  "ต้นกล้วย":       "image/plant13.png",
+  "ปรง":            "image/plant14.png",
+  "ต้นมะพร้าว":     "image/plant15.png",
+  "ดอกบัว":         "image/plant16.png",
+  "แหน":            "image/plant17.png",
+  "แคร์รอต":        "image/plant18.png",
+  "มอส":            "image/plant19.png",
+  "กาบหอยแครง":    "image/plant20.png",
+  "หม้อข้าวหม้อแกงลิง": "image/plant21.png",
+  "ต้นถั่ว":        "image/plant22.png",
+  "กุหลาบ":        "image/plant23.png",
+  "ชายผ้าสีดา":    "image/plant24.png",
+  "ไข่ผำ":          "image/plant25.png",
+
+};
+
+/* ===== [LEVEL 1] คลังคำถามแบบ “สิ่งมีชีวิตต้องการอะไร?” 2 ช้อยส์ =====
+   ใส่ได้กี่ข้อก็ได้ รูปจะอ้างจาก FIXED_IMG_MAP ตามชื่อ prompt
+   choices: [ตัวเลือกซ้าย, ตัวเลือกขวา], correct: index ที่ถูก (0 หรือ 1)
+*/
+const NEEDS_BANK = [
+    { prompt:"ปลาหมอ", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"ปลาเก๋า", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"ปลาชะโด", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"ปลาการ์ตูน", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"ปลาทูน่า", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"ปลาไหล", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+    { prompt:"ฉลาม", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+    { prompt:"ปลาทอง", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+ 
+    { prompt:"อึ่งอ่าง", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ซาลาแมนเดอร์", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"คางคก", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+    { prompt:"เขียด", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"กบ", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"แอกโซลอเติล", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 }, 
+        { prompt:"เขียดงู", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+
+        { prompt:"จระเข้", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"เต่า", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"จิ้งจก", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"กิ้งก่า", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"มังกรโคโมโด", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"งู", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+
+        { prompt:"ไก่", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"เป็ด", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+    { prompt:"นกพิราบ", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"นกฮูก", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"อีกา", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"นกอินทรี", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+    { prompt:"นกกระจอกเทศ", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"นกฟลามิงโก", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+
+        { prompt:"วัว", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"สิงโต", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"วาฬ", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"โลมา", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"ลิงกอริลา", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"ม้าลาย", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ฮิปโป", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ช้าง", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"หมีแพนด้า", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"หมู", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"เสือ", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"หนู", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ควาย", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"คน", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+
+        { prompt:"หอยทาก", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+    { prompt:"ผีเสื้อ", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+    { prompt:"ยุง", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"หนอน", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ไส้เดือน", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"หอย", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"มด", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"แมลงเต่าทอง", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"กุ้ง", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"ปลาหมึก", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"แมงมุม", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+     { prompt:"ปู", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+     { prompt:"ตุ๊กแก", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ดาวทะเล", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"เม่นทะเล", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"ฟองน้ำ", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"แมงกะพรุน", choices:["มีกระดูกสันหลัง","ไม่มีกระดูกสันหลัง"], correct:1 },
+        { prompt:"พยาธิใบไม้", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"พลานาเรีย", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"ตะขาบ", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+        { prompt:"พยาธิตัวกลม", choices:["ไม่มีกระดูกสันหลัง","มีกระดูกสันหลัง"], correct:0 },
+];
+
+// ===  "ด่าน 1" สิ่งมีชีวิต 3 อย่าง ===
+const LEVEL1_BANK = [
+    { prompt:"ปลาหมอ", choices:["สัตว์","พืช"], correct:0 },
+    { prompt:"ปลาเก๋า", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+    { prompt:"ปลาชะโด", choices:["สัตว์","พืช"], correct:0 },
+    { prompt:"ปลาการ์ตูน", choices:["สัตว์","พืช"], correct:0 },
+    { prompt:"ปลาทูน่า", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+    { prompt:"ปลาไหล", choices:["ไม่ใช่พืชและสัตว์","สัตว์"], correct:1 },
+    { prompt:"ฉลาม", choices:["ไม่ใช่พืชและสัตว์","สัตว์"], correct:1 },
+    { prompt:"ปลาทอง", choices:["ไม่ใช่พืชและสัตว์","สัตว์"], correct:1 },
+ 
+    { prompt:"อึ่งอ่าง", choices:["ไม่ใช่พืชและสัตว์","สัตว์"], correct:1 },
+        { prompt:"ซาลาแมนเดอร์", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 }, 
+        { prompt:"คางคก", choices:["สัตว์","พืช"], correct:0 },
+    { prompt:"เขียด", choices:["พืช","สัตว์"], correct:1 },
+    { prompt:"กบ", choices:["พืช","สัตว์"], correct:1 },
+        { prompt:"แอกโซลอเติล", choices:["ไม่ใช่พืชและสัตว์","สัตว์"], correct:1 }, 
+        { prompt:"เขียดงู", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+
+        { prompt:"จระเข้", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"เต่า", choices:["สัตว์","พืช"], correct:0 },
+    { prompt:"จิ้งจก", choices:["พืช","สัตว์"], correct:1 },
+    { prompt:"กิ้งก่า", choices:["พืช","สัตว์"], correct:1 },
+        { prompt:"มังกรโคโมโด", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+    { prompt:"ตัวเงินตัวทอง", choices:["ไม่ใช่พืชและสัตว์","สัตว์"], correct:1 },
+    { prompt:"งู", choices:["ไม่ใช่พืชและสัตว์","สัตว์"], correct:1 },
+    { prompt:"อิกัวนา", choices:["พืช","สัตว์"], correct:1 },
+
+        { prompt:"ไก่", choices:["สัตว์","พืช"], correct:0 },
+        { prompt:"เป็ด", choices:["พืช","สัตว์"], correct:1 },
+    { prompt:"นกพิราบ", choices:["ไม่ใช่พืชและสัตว์","สัตว์"], correct:1 },
+        { prompt:"นกฮูก", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"อีกา", choices:["สัตว์","พืช"], correct:0 },
+        { prompt:"นกอินทรี", choices:["สัตว์","พืช"], correct:0 },
+    { prompt:"นกกระจอกเทศ", choices:["ไม่ใช่พืชและสัตว์","สัตว์"], correct:1 },
+        { prompt:"นกฟลามิงโก", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"นกเงือก", choices:["สัตว์","พืช"], correct:0 },
+        { prompt:"นกแก้ว", choices:["สัตว์","พืช"], correct:0 },
+
+        { prompt:"วัว", choices:["พืช","สัตว์"], correct:1 },
+        { prompt:"สิงโต", choices:["พืช","สัตว์"], correct:1 },
+        { prompt:"วาฬ", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"โลมา", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"ลิงกอริลา", choices:["พืช","สัตว์"], correct:1 },
+        { prompt:"ม้าลาย", choices:["พืช","สัตว์"], correct:1 },
+        { prompt:"ฮิปโป", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"ช้าง", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"หมีแพนด้า", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"หมู", choices:["พืช","สัตว์"], correct:1 },
+        { prompt:"เสือ", choices:["พืช","สัตว์"], correct:1 },
+        { prompt:"หนู", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"ควาย", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"คน", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+
+        { prompt:"หอยทาก", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+    { prompt:"ผีเสื้อ", choices:["ไม่ใช่พืชและสัตว์","สัตว์"], correct:1 },
+    { prompt:"ยุง", choices:["ไม่ใช่พืชและสัตว์","สัตว์"], correct:1 },
+        { prompt:"หนอน", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"ไส้เดือน", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"หอย", choices:["พืช","สัตว์"], correct:1 },
+        { prompt:"มด", choices:["พืช","สัตว์"], correct:1 },
+        { prompt:"แมลงเต่าทอง", choices:["สัตว์","พืช"], correct:0 },
+        { prompt:"กุ้ง", choices:["สัตว์","พืช"], correct:0 },
+        { prompt:"ปลาหมึก", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"แมงมุม", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+     { prompt:"ปู", choices:["ไม่ใช่พืชและสัตว์","สัตว์"], correct:1 },
+     { prompt:"ตุ๊กแก", choices:["ไม่ใช่พืชและสัตว์","สัตว์"], correct:1 },
+        { prompt:"ดาวทะเล", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"เม่นทะเล", choices:["สัตว์","พืช"], correct:0 },
+        { prompt:"ฟองน้ำ", choices:["สัตว์","พืช"], correct:0 },
+        { prompt:"แมงกะพรุน", choices:["สัตว์","พืช"], correct:0 },
+        { prompt:"พยาธิใบไม้", choices:["พืช","สัตว์"], correct:1 },
+        { prompt:"พลานาเรีย", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"ตะขาบ", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"พยาธิตัวกลม", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:0 },
+
+        { prompt:"เห็ด", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:0 },
+        { prompt:"รา", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:0 },
+        { prompt:"แบคทีเรีย", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:1 },
+        { prompt:"อะมีบา", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:1 },
+        { prompt:"ซายาโนแบคทีเรีย", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:0 },
+        { prompt:"แลคโตบาซิลลัส", choices:["สัตว์","ไม่ใช่พืชและสัตว์"], correct:1 },
+        { prompt:"เห็ดนางรม", choices:["พืช","ไม่ใช่พืชและสัตว์"], correct:1 },
+        { prompt:"อี โคไล", choices:["พืช","ไม่ใช่พืชและสัตว์"], correct:1 },
+
+       { prompt:"ต้นไม้", choices:["พืช","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"สาหร่าย", choices:["พืช","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"ต้นไผ่", choices:["สัตว์","พืช"], correct:1 },
+        { prompt:"เฟิร์น", choices:["สัตว์","พืช"], correct:1 },
+        { prompt:"ถั่วงอก", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:1 },
+        { prompt:"ผัก", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:1 },
+        { prompt:"หญ้า", choices:["พืช","สัตว์"], correct:0 },
+        { prompt:"ต้นกระบองเพชร", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:1 },
+        { prompt:"ต้นข้าว", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:1 },
+        { prompt:"กล้วยไม้", choices:["พืช","สัตว์"], correct:0 },
+       { prompt:"ต้นดอกทานตะวัน", choices:["พืช","ไม่ใช่พืชและสัตว์"], correct:0 },
+       { prompt:"ต้นสน", choices:["พืช","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"ต้นกล้วย", choices:["สัตว์","พืช"], correct:1 },
+        { prompt:"ปรง", choices:["สัตว์","พืช"], correct:1 },
+       { prompt:"ต้นมะพร้าว", choices:["พืช","ไม่ใช่พืชและสัตว์"], correct:0 },
+       { prompt:"ดอกบัว", choices:["พืช","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"แหน", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:1 },
+        { prompt:"แคร์รอต", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:1 },
+        { prompt:"มอส", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:1 },
+        { prompt:"กาบหอยแครง", choices:["สัตว์","พืช"], correct:1 },
+        { prompt:"หม้อข้าวหม้อแกงลิง", choices:["สัตว์","พืช"], correct:1 },
+       { prompt:"ต้นถั่ว", choices:["พืช","ไม่ใช่พืชและสัตว์"], correct:0 },
+       { prompt:"กุหลาบ", choices:["พืช","ไม่ใช่พืชและสัตว์"], correct:0 },
+       { prompt:"ชายผ้าสีดา", choices:["พืช","ไม่ใช่พืชและสัตว์"], correct:0 },
+        { prompt:"ไข่ผำ", choices:["ไม่ใช่พืชและสัตว์","พืช"], correct:1 },
+];
+
+const LEVEL3_BANK = [
+    { prompt:"ปลาหมอ", choices:["กลุ่มปลา","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+    { prompt:"ปลาเก๋า", choices:["กลุ่มปลา","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+    { prompt:"ปลาชะโด", choices:["กลุ่มปลา","สัตว์นักล่า"], correct:0 },
+    { prompt:"ปลาการ์ตูน", choices:["สัตว์เลี้ยง","กลุ่มปลา"], correct:1 },
+    { prompt:"ปลาทูน่า", choices:["สัตว์เลื้อยคลาน","กลุ่มปลา"], correct:1 },
+    { prompt:"ปลาไหล", choices:["สัตว์เลื้อยคลาน","กลุ่มปลา"], correct:1 },
+    { prompt:"ฉลาม", choices:["กลุ่มปลา","สัตว์นักล่า"], correct:0 },
+    { prompt:"ปลาทอง", choices:["สัตว์เลี้ยง","กลุ่มปลา"], correct:1 },
+ 
+    { prompt:"อึ่งอ่าง", choices:["สัตว์เลื้อยคลาน","สัตว์สะเทินน้ำสะเทินบก"], correct:1 },
+        { prompt:"ซาลาแมนเดอร์", choices:["สัตว์สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:0 }, 
+        { prompt:"คางคก", choices:["สัตว์สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:0 }, 
+    { prompt:"เขียด", choices:["สัตว์สะเทินน้ำสะเทินบก","กลุ่มปลา"], correct:0 }, 
+    { prompt:"กบ", choices:["สัตว์สะเทินน้ำสะเทินบก","กลุ่มปลา"], correct:1 }, 
+        { prompt:"แอกโซลอเติล", choices:["สัตว์สะเทินน้ำสะเทินบก","กลุ่มปลา"], correct:0 }, 
+        { prompt:"เขียดงู", choices:["สัตว์สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:0 }, 
+
+        { prompt:"จระเข้", choices:["สัตว์สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:1 }, 
+        { prompt:"เต่า", choices:["กลุ่มปลา","สัตว์เลื้อยคลาน"], correct:1 }, 
+    { prompt:"จิ้งจก", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์เลื้อยคลาน"], correct:1 }, 
+    { prompt:"กิ้งก่า", choices:["สัตว์สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:1 },
+        { prompt:"มังกรโคโมโด", choices:["สัตว์กินเนื้อ","สัตว์เลื้อยคลาน"], correct:1 },
+    { prompt:"ตัวเงินตัวทอง", choices:["สัตว์เลื้อยคลาน","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+    { prompt:"งู", choices:["สัตว์เลื้อยคลาน","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+    { prompt:"อิกัวนา", choices:["สัตว์เลื้อยคลาน","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+
+        { prompt:"ไก่", choices:["สัตว์ปีก","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+        { prompt:"เป็ด", choices:["สัตว์ปีก","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+    { prompt:"นกพิราบ", choices:["สัตว์บก","สัตว์ปีก"], correct:1 },
+        { prompt:"นกฮูก", choices:["สัตว์กลางคืน","สัตว์ปีก"], correct:1 },
+        { prompt:"อีกา", choices:["สัตว์เลื้อยคลาน","สัตว์ปีก"], correct:1 },
+        { prompt:"นกอินทรี", choices:["สัตว์นักล่า","สัตว์ปีก"], correct:1 },
+    { prompt:"นกกระจอกเทศ", choices:["สัตว์บก","สัตว์ปีก"], correct:1 },
+        { prompt:"นกฟลามิงโก", choices:["สัตว์ปีก","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+        { prompt:"นกเงือก", choices:["กลุ่มปลา","สัตว์ปีก"], correct:1 },
+        { prompt:"นกแก้ว", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์ปีก"], correct:1 },
+
+        { prompt:"วัว", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์กินพืช"], correct:0 },
+        { prompt:"สิงโต", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์นักล่า"], correct:0 },
+        { prompt:"วาฬ", choices:["สัตว์เลี้ยงลูกด้วยนม","กลุ่มปลา"], correct:0 },
+        { prompt:"โลมา", choices:["กลุ่มปลา","สัตว์เลี้ยงลูกด้วยนม"], correct:1 }, 
+        { prompt:"ลิงกอริลา", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์กินพืช"], correct:1 },
+        { prompt:"ม้าลาย", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์กินพืช"], correct:1 },
+        { prompt:"ฮิปโป", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+        { prompt:"ช้าง", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+        { prompt:"หมีแพนด้า", choices:["สัตว์เลื้อยคลาน","สัตว์เลี้ยงลูกด้วยนม"], correct:1 }, 
+        { prompt:"หมู", choices:["สัตว์เลื้อยคลาน","สัตว์เลี้ยงลูกด้วยนม"], correct:1 }, 
+        { prompt:"เสือ", choices:["สัตว์หากินกลางคืน","สัตว์เลี้ยงลูกด้วยนม"], correct:1 }, 
+        { prompt:"หนู", choices:["สัตว์หากินกลางคืน","สัตว์เลี้ยงลูกด้วยนม"], correct:1 }, 
+        { prompt:"ควาย", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+        { prompt:"คน", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+        { prompt:"คน", choices:["สัตว์เลื้อยคลาน","สัตว์เลี้ยงลูกด้วยนม"], correct:1 }, 
+];
+
+(function attachLevel1Images(){
+  for (const q of LEVEL1_BANK){
+    const img = FIXED_IMG_MAP[q.prompt];
+    if (img) q.img = img;
+  }
+})();
+
+(function attachLevel3Images(){
+  for (const q of LEVEL3_BANK){
+    const img = FIXED_IMG_MAP[q.prompt];
+    if (img) q.img = img;
+  }
+})();
+
+
+// ผูกรูปภาพอัตโนมัติให้ NEEDS_BANK (ถ้ามีใน FIXED_IMG_MAP)
+(function attachNeedsImages(){
+  for (const q of NEEDS_BANK){
+    const img = FIXED_IMG_MAP[q.prompt];
+    if (img) q.img = img;
+  }
+})();
+
+
+let __orderL1=[], __idxL1=0; // ด่าน 1 : LEVEL1_BANK
+let __orderL2=[], __idxL2=0; // ด่าน 2 : NEEDS_BANK
+let __orderL3=[], __idxL3=0; // ด่าน 3 : LEVEL3_BANK
+
+function drawQuestion(){
+  if (window.currentLevel === 1){
+    if(!__orderL1.length || __idxL1>=__orderL1.length){
+      __orderL1 = shuffle([...Array(LEVEL1_BANK.length).keys()]);
+      __idxL1 = 0;
+    }
+    const raw = LEVEL1_BANK[__orderL1[__idxL1++]];
+    return { mode:1, question: raw.prompt, img: raw.img, choices: raw.choices, correctIndex: raw.correct };
+
+  } else if (window.currentLevel === 2){
+    if(!__orderL2.length || __idxL2>=__orderL2.length){
+      __orderL2 = shuffle([...Array(NEEDS_BANK.length).keys()]);
+      __idxL2 = 0;
+    }
+    const raw = NEEDS_BANK[__orderL2[__idxL2++]];
+    return { mode:1, question: raw.prompt, img: raw.img, choices: raw.choices, correctIndex: raw.correct };
+
+  } else if (window.currentLevel === 3){
+    if(!__orderL3.length || __idxL3>=__orderL3.length){
+      __orderL3 = shuffle([...Array(LEVEL3_BANK.length).keys()]);
+      __idxL3 = 0;
+    }
+    const raw = LEVEL3_BANK[__orderL3[__idxL3++]];
+    return { mode:1, question: raw.prompt, img: raw.img, choices: raw.choices, correctIndex: raw.correct };
+  }
+}
+
+
+function nextRound(){
+    if (ended) return;   // ❗ ถ้าจบเกมแล้ว ไม่ต้องสร้างรอบใหม่
+  clearRoundObjects(); awaitingAnswer=false; stopTimebar();
+  qBox.textContent='';
+
+  setTimeout(()=>{
+    const q = drawQuestion();
+    dropQuestion(q.question, q.img);
+
+    setTimeout(()=>{
+      if (q.mode === 0){
+        // ด่านเดิม
+        spawnTwoCircles(q.correctTag);
+      } else {
+        // ด่านใหม่: 2 ช้อยส์ตามข้อ
+        spawnTwoAnswerCircles(q.choices, q.correctIndex);
+      }
+      awaitingAnswer = true;
+    }, OPT_IN_MS);
+
+  }, Q_DROP_MS + Q_HOLD_MS);
+}
+
+function startRoundTimer(){
+  // ไม่ใช้ตัวจับเวลาอีกต่อไป — แค่เปิดให้ตอบได้
+  awaitingAnswer = true;
+}
+
+  function startGame(){
+    document.body.classList.remove('prestart');
+    document.body.classList.add('in-game');   // ✅ แสดง HUD เมื่อเริ่มเล่นจริง
+    running=true; ended=false; paused=false;
+        window.ended = ended; // ✅ อัปเดตค่า global
+    overlay.style.visibility='hidden'; overlay.style.opacity='0';
+    score=0; round=0; updateHUD();
+        startGameTimer(); // [เพิ่มใหม่] เริ่มจับเวลาทั้งด่าน 2 นาที
+    nextRound();
+  }
+
+  // ======== จบด่าน (แก้ใหม่: หยุดสนามเกมทั้งหมดเมื่อสรุปคะแนน) ========
+  function endLevel(){
+    ended = true;
+        window.ended = ended; // ✅ อัปเดตค่า global
+    running = false;
+    clearGameTimer();
+    stopClockUI();
+
+    // 🔒 หยุดและซ่อนสนามเกมทั้งหมด
+    awaitingAnswer = false;
+    stopTimebar();
+    clearRoundObjects();                 // ลบวงกลมคำตอบ + ล้าง interval
+    qBox.textContent = '';               // ล้างข้อความคำถาม
+    qBox.style.display = 'none';         // ซ่อนกล่องคำถาม
+    if (qImg){
+      qImg.style.display = 'none';       // ซ่อนภาพคำถาม
+      qImg.removeAttribute('src');
+    }
+    game.style.visibility = 'hidden';    // ซ่อนสนามเกมทั้งหมด (ไม่ให้รันต่อ)
+
+    // อัปเดตคะแนน
+    finalScoreEl.textContent = String(score);
+
+    // ★ ใส่อีโมจิตามช่วงคะแนน
+    const badgeEl = document.getElementById('scoreBadge');
+    badgeEl.textContent = getBadgeEmoji(score);
+
+    bgm?.pause?.();
+    winSound?.play?.().catch(()=>{});
+
+    overlay.style.visibility = 'visible';
+    overlay.style.opacity    = '1';
+  }
+
+
+  function getBadgeEmoji(sc){
+    if (sc <= 5)  return '❤️';    // 0–5
+    if (sc <= 10) return '🥇';    // 6–10
+    if (sc <= 15) return '🏆';    // 11–15
+    return '🏆';
+  }
+
+
+function pauseGame(){
+  if(!running||paused) return;
+  paused = true;
+  clearInterval(roundTimer);
+  document.querySelectorAll('.option').forEach(n=> n.style.pointerEvents='none');
+  pauseGameTimer();
+}
+
+  function resumeGame(){ if(!paused||ended)return; paused=false; 
+        document.querySelectorAll('.option').forEach(n=> n.style.pointerEvents='auto'); 
+    bgm?.play?.().catch(()=>{}); 
+
+        resumeGameTimer(); // [เพิ่มใหม่] กลับมานับเวลารวมต่อหลังจากพักเกม
+}
+  document.getElementById('pauseBtn')?.addEventListener('click', ()=>{ if(!paused){ pauseGame(); document.getElementById('pauseBtn').textContent='▶️ ต่อ'; } else { resumeGame(); document.getElementById('pauseBtn').textContent='⏸ หยุด'; } });
+  
+
+document.getElementById('quickRestart')?.addEventListener('click', ()=>{
+    document.body.classList.remove('prestart');
+    restorePlayfield();   // ✅ คืนสนามเกม
+    overlay.style.visibility='hidden';
+    overlay.style.opacity='0';
+    resetState();
+    document.body.classList.remove('in-game');
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('landing').classList.remove('hide');
+         bgm.currentTime = 0;
+       bgm.play().catch(()=>{});
+
+});
+
+
+
+  restartBtn.addEventListener('click', ()=>{
+    restorePlayfield();   // ✅ คืนสนามเกม
+    overlay.style.visibility='hidden';
+    overlay.style.opacity='0';
+    resetState();
+        bgm.currentTime = 0;
+    bgm.play().catch(()=>{});
+    startGame();
+  });
+
+
+  selectLevelBtn.addEventListener('click', ()=>{
+    document.body.classList.remove('prestart');
+    restorePlayfield();   // ✅ คืนสนามเกม
+    overlay.style.visibility='hidden';
+    overlay.style.opacity='0';
+    resetState();
+    document.getElementById('landing').classList.remove('hide');
+    document.getElementById('startScreen').style.display='none';
+        bgm.currentTime = 0;
+      bgm.play().catch(()=>{});
+  });
+
+
+  // start screen
+  const startScreen  = document.getElementById('startScreen');
+  const startBtn     = document.getElementById('startBtn');
+  const countdownEl  = document.getElementById('countdown');
+
+  function openStart(autoCountdown=true){
+    document.body.classList.add('prestart');   // ให้ HUD โผล่ก่อนเริ่มเกม
+    startScreen.style.display='flex';
+  
+    if(autoCountdown){
+      let n=3; countdownEl.textContent=n; countdownEl.style.display='block';
+      const itv=setInterval(()=>{ n--; if(n>0){countdownEl.textContent=n}else{ clearInterval(itv); startScreen.style.display='none'; startGame() } },1000);
+    } else {
+      startBtn.disabled=false; startBtn.style.pointerEvents='auto';
+      startBtn.style.display='inline-block'; countdownEl.style.display='none';
+    }
+  }
+  startBtn?.addEventListener('click', ()=>{
+    if(startBtn.disabled) return;
+    startBtn.disabled=true; startBtn.style.pointerEvents='none';
+    startBtn.style.display='none';
+    let n=3; countdownEl.textContent=n; countdownEl.style.display='block';
+    const itv=setInterval(()=>{ n--; if(n>0){ countdownEl.textContent=n } else { clearInterval(itv); startScreen.style.display='none'; startGame(); startBtn.disabled=false; startBtn.style.pointerEvents='auto'; } },1000);
+  });
+
+
+  document.getElementById('guideBtn')?.addEventListener('click', ()=>{ document.getElementById('landing').classList.add('hide'); document.getElementById('guideScreen').style.display='flex' });
+  document.getElementById('guideBack')?.addEventListener('click', ()=>{ document.getElementById('guideScreen').style.display='none'; document.getElementById('landing').classList.remove('hide') });
+
+  // visibility pause
+  let wasRunning=false;
+  function uiBlockingOpen(){
+    const landing=document.getElementById('landing');
+    const startOpen = startScreen && startScreen.style.display!=='none';
+    const guide=document.getElementById('guideScreen');
+    const guideOpen = getComputedStyle(guide).display!=='none';
+    const overlayOpen = overlay.style.visibility==='visible';
+    return overlayOpen || (!landing.classList.contains('hide')) || startOpen || guideOpen;
+  }
+  function handleHidden(){ wasRunning = running && !ended && !uiBlockingOpen(); if(wasRunning) pauseGame() }
+  function handleVisible(){ if(wasRunning && paused && !ended && !uiBlockingOpen()) resumeGame(); wasRunning=false }
+  document.addEventListener('visibilitychange', ()=>{ if(document.hidden) handleHidden(); else handleVisible() });
+  window.addEventListener('blur', handleHidden); window.addEventListener('focus', handleVisible);
+
+})();
+</script>
+
+<!-- ===== คำสั่งเสียง (ถ้าไม่มีก็ข้ามอัตโนมัติ) ===== -->
+<script>
+(function(){
+  const micBtn   = document.getElementById('micBtn'); // ไม่มีปุ่ม = ไม่ทำงาน
+  if(!micBtn) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ micBtn.textContent='🎤 ไม่รองรับ'; micBtn.disabled=true; return }
+  const rec = new SR(); rec.lang='th-TH'; rec.continuous=true; rec.interimResults=true;
+  function tokensFrom(s){ s=(s||'').toLowerCase().trim(); s=s.replace(/\s*(ค่ะ|ครับ|คะ|ฮะ)$/,''); return s.split(/[\s,，。\.!?:;、]+/).filter(Boolean) }
+  function currentOptionsMap(){ const map=new Map(); 
+
+document.querySelectorAll('.option').forEach(n=>{ 
+     const t=(n.textContent||'').trim().toLowerCase(); if(!map.has(t)) map.set(t,[]); map.get(t).push(n) }); return map }
+  function pickNearest(arr){ return arr[0] }
+  function tryFire(phrase){ const toks=tokensFrom(phrase); if(!toks.length) return false; const cmap=currentOptionsMap(); for(const t of toks){ if(cmap.has(t)){ const node = pickNearest(cmap.get(t)); node?.click(); return true } } return false }
+  rec.onresult=(e)=>{ for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; const txt=(r[0]?.transcript||'').trim(); if(!txt) continue; tryFire(txt) } };
+})();
+</script>
+
+<!-- ===== Pose (มือเป็นวงกลมแตะเลือกช้อยส์) ===== -->
+<script type="module">
+import {PoseLandmarker, FilesetResolver} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
+const camBtn = document.getElementById('camBtn');
+const video  = document.getElementById('cameraMirror');
+const cvs    = document.getElementById('camCanvas');
+const ctx    = cvs.getContext('2d', { alpha: true });
+const DETECT_W = 320;
+let detectCanvas = document.createElement('canvas');
+let detectCtx = detectCanvas.getContext('2d', { alpha:false, desynchronized:true });
+let CAM_ON=false, landmarker=null, raf=0, stream=null;
+
+function fitCanvas(){ const dpr = CAM_ON? 1 : Math.max(1, window.devicePixelRatio||1); cvs.width=Math.round(innerWidth*dpr); cvs.height=Math.round(innerHeight*dpr); cvs.style.width=innerWidth+'px'; cvs.style.height=innerHeight+'px'; ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr,dpr) }
+fitCanvas(); addEventListener('resize', fitCanvas);
+function coverCropRect(){ const vw=video.videoWidth||640, vh=video.videoHeight||480; const sw=innerWidth, sh=innerHeight; const scale=Math.max(sw/vw, sh/vh); const sW=Math.round(sw/scale), sH=Math.round(sh/scale); const sX=Math.round((vw-sW)/2), sY=Math.round((vh-sH)/2); return {sX,sY,sW,sH,vw,vh,sw,sh} }
+function mapToScreen(nx,ny){ const {sX,sY,sW,sH,vw,vh,sw,sh} = coverCropRect(); const px=nx*vw, py=ny*vh; const u=(px-sX)/sW, v=(py-sY)/sH; let x=u*sw, y=v*sh; x=sw-x; return {x,y} }
+
+ 	const SHOW_HAND_BALL=false; 
+ 	const lastHitAt=new WeakMap(); 
+ 	const HIT_LOCK_MS=160;
+function circleIntersectsRect(cx,cy,r, rc){ 
+ 	const nx=Math.max(rc.left, 
+ 	Math.min(cx, rc.right)); 
+ 	const ny=Math.max(rc.top, 
+ 	Math.min(cy, rc.bottom)); 
+ 	const dx=cx-nx, dy=cy-ny;    	
+ 	return (dx*dx+dy*dy)<=r*r 
+}
+
+function hitByCircle(center, r){
+  if (window.ended) return;   // ✅ เช็ค global แทน
+  const opts = [...document.querySelectorAll('.option')];
+  for (const n of opts){
+    const rc = n.getBoundingClientRect();
+    if (circleIntersectsRect(center.x, center.y, r, rc)){
+      const t = performance.now();
+      const last = lastHitAt.get(n) || 0;
+      if (t - last < HIT_LOCK_MS) continue;
+      lastHitAt.set(n, t);
+      n.click();
+    }
+  }
+}
+
+
+async function ensureLandmarker(){ if(landmarker) return landmarker; const fileset = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"); landmarker = await PoseLandmarker.createFromOptions(fileset, { baseOptions:{ modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task" }, runningMode:'VIDEO', numPoses:1, minPoseDetectionConfidence:.35, minPosePresenceConfidence:.35, minTrackingConfidence:.35 }); return landmarker }
+function drawHandBall(elbowIdx, wristIdx, lm){ if(!lm[elbowIdx]||!lm[wristIdx]) return null; const elbow = mapToScreen(lm[elbowIdx].x, lm[elbowIdx].y); const wrist = mapToScreen(lm[wristIdx].x, lm[wristIdx].y); const r=24; const L=Math.max(1, Math.hypot(wrist.x-elbow.x, wrist.y-elbow.y)); const ux=(wrist.x-elbow.x)/L, uy=(wrist.y-elbow.y)/L; const HAND_PUSH=1.5, PUSH_PX=6; const center={ x: wrist.x + ux*(r*HAND_PUSH+PUSH_PX), y: wrist.y + uy*(r*HAND_PUSH+PUSH_PX) }; if(SHOW_HAND_BALL){ ctx.beginPath(); ctx.arc(center.x,center.y,r,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle='#fff'; ctx.stroke(); } hitByCircle(center, r*.95); return center }
+function drawPoseAndColliders(res){ const sw=innerWidth, sh=innerHeight; ctx.clearRect(0,0,sw,sh); if(!res?.landmarks?.length) return; const lm=res.landmarks[0]; drawHandBall(13,15,lm); drawHandBall(14,16,lm) }
+function runLoop(){ const step=()=>{ if(!video.videoWidth){ raf=requestAnimationFrame(step); return } const now=performance.now(); try{ const {sX,sY,sW,sH}=coverCropRect(); detectCtx.drawImage(video, sX,sY,sW,sH, 0,0, detectCanvas.width, detectCanvas.height); const res=landmarker.detectForVideo(detectCanvas, now); drawPoseAndColliders(res) }catch(e){} raf=requestAnimationFrame(step) }; raf=requestAnimationFrame(step) }
+async function startCamera(){ await ensureLandmarker(); 
+    stream = await navigator.mediaDevices.getUserMedia({
+  video: { width: 960, height: 540, frameRate: 30, facingMode: 'user' },
+  audio: false
+});                       
+                          
+    video.srcObject=stream; await video.play().catch(()=>{}); const vw=video.videoWidth||640, vh=video.videoHeight||480; const ratio=vw/vh; detectCanvas.width=DETECT_W; detectCanvas.height=Math.round(DETECT_W/ratio); video.style.display='block'; cvs.style.display='block'; camBtn.textContent='📷 กล้อง: เปิด'; CAM_ON=true; fitCanvas(); runLoop() }
+function stopCamera(){ cancelAnimationFrame(raf); if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null } try{ video.pause() }catch(e){} video.removeAttribute('srcObject'); video.style.display='none'; cvs.style.display='none'; ctx.clearRect(0,0,innerWidth,innerHeight); camBtn.textContent='📷 กล้อง: ปิด'; CAM_ON=false; fitCanvas() }
+camBtn.addEventListener('click', async ()=>{ if(!stream){ try{ await startCamera() }catch(err){ camBtn.textContent='📷 กล้อง: ไม่ได้รับอนุญาต'; camBtn.disabled=true } } else { stopCamera() } });
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden && stream) stopCamera() });
+</script>
+
+<!-- ===== เมนู/เริ่มเกม ===== -->
+<script>
+(()=> {
+  const landing = document.getElementById('landing');
+  const startScreen = document.getElementById('startScreen');
+  const guideScreen = document.getElementById('guideScreen');
+
+  document.querySelectorAll('.levelBtn').forEach(btn=>{
+  if(btn.id==='guideBtn') return;
+  btn.addEventListener('click', ()=>{
+    const lv = Number(btn.dataset.level || 0);
+
+
+    window.currentLevel = lv; // กันพลาดข้ามสโคป
+       document.body.classList.add('prestart'); 
+    landing.classList.add('hide');
+    startScreen.style.display='flex';
+    document.getElementById('countdown').style.display='none';
+    
+// อัปเดตหัวข้อภารกิจให้ตรงด่านด้วย
+    const st = document.getElementById('startTitle');
+
+function getMissionTitle(lv){
+  switch (lv) {
+    case 1: // ด่าน 1: ประเภทของสิ่งมีชีวิต
+      return 'ภารกิจ : ระบุประเภทของสิ่งมีชีวิต (พืช / สัตว์ / อื่น ๆ)';
+    case 2: // ด่าน 2: การจำแนกสัตว์ (มีกระดูกสันหลัง/ไม่มีกระดูกสันหลัง)
+      return 'ภารกิจ : จำแนกสัตว์ (มีกระดูกสันหลัง/ไม่มีกระดูกสันหลัง)';
+    case 3: // ด่าน 3: ประเภทของสัตว์มีกระดูกสันหลัง
+      return 'ภารกิจ : จำแนกประเภทของสัตว์มีกระดูกสันหลัง';
+    default:
+      return 'ภารกิจ : เลือกวงกลมคำตอบจำแนกสิ่งมีชีวิตให้ถูกต้อง';
+  }
+}
+
+
+    st.textContent = getMissionTitle(lv);
+
+  });
+});
+
+  document.getElementById('guideBtn')?.addEventListener('click', ()=>{ landing.classList.add('hide'); guideScreen.style.display='flex' });
+  document.getElementById('guideBack')?.addEventListener('click', ()=>{ guideScreen.style.display='none'; landing.classList.remove('hide') });
+})();
+</script>
+</body>
+</html>
+
