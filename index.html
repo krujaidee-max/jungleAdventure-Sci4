@@ -1987,10 +1987,23 @@ document.addEventListener('visibilitychange', ()=>{ if(document.hidden && stream
        document.body.classList.add('prestart'); 
     landing.classList.add('hide');
     startScreen.style.display='flex';
+
+        const startBtn    = document.getElementById('startBtn');
+        const countdownEl = document.getElementById('countdown');
+
+if (startBtn){
+  startBtn.style.display = 'inline-block';
+  startBtn.disabled = false;
+  startBtn.style.pointerEvents = 'auto';
+}
+if (countdownEl){
+  countdownEl.style.display = 'none';
+  countdownEl.textContent = '3';
+}
+
     document.getElementById('countdown').style.display='none';
     
-// อัปเดตหัวข้อภารกิจให้ตรงด่านด้วย
-    const st = document.getElementById('startTitle');
+   const st = document.getElementById('startTitle');
 
 function getMissionTitle(lv){
   switch (lv) {
@@ -2004,7 +2017,6 @@ function getMissionTitle(lv){
       return 'ภารกิจ : เลือกวงกลมคำตอบจำแนกสิ่งมีชีวิตให้ถูกต้อง';
   }
 }
-
 
     st.textContent = getMissionTitle(lv);
 
