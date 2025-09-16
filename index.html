@@ -937,13 +937,13 @@ function freezePlayfield(on){
 }
 
 function resetState(){ 
-  // ปิดสถานะการรันเกมทันที
+    clearCountdown();
   running = false;
   ended   = true;
-    window.ended = ended; // ✅ อัปเดตค่า global
+  window.ended = ended;
   paused  = false;
 
-  // ยกเลิกตัวจับเวลาทุกรอบ/การสุ่มคำถามที่อาจยังค้าง
+
   clearRoundObjects();
   clearGameTimer();
   if (roundTimer){ clearInterval(roundTimer); roundTimer = null; }
@@ -1594,8 +1594,8 @@ const LEVEL1_BANK = [
 ];
 
 const LEVEL3_BANK = [
-    { prompt:"ปลาหมอ", choices:["กลุ่มปลา","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
-    { prompt:"ปลาเก๋า", choices:["กลุ่มปลา","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+    { prompt:"ปลาหมอ", choices:["กลุ่มปลา","สะเทินน้ำสะเทินบก"], correct:0 },
+    { prompt:"ปลาเก๋า", choices:["กลุ่มปลา","สะเทินน้ำสะเทินบก"], correct:0 },
     { prompt:"ปลาชะโด", choices:["กลุ่มปลา","สัตว์นักล่า"], correct:0 },
     { prompt:"ปลาการ์ตูน", choices:["สัตว์เลี้ยง","กลุ่มปลา"], correct:1 },
     { prompt:"ปลาทูน่า", choices:["สัตว์เลื้อยคลาน","กลุ่มปลา"], correct:1 },
@@ -1603,31 +1603,31 @@ const LEVEL3_BANK = [
     { prompt:"ฉลาม", choices:["กลุ่มปลา","สัตว์นักล่า"], correct:0 },
     { prompt:"ปลาทอง", choices:["สัตว์เลี้ยง","กลุ่มปลา"], correct:1 },
  
-    { prompt:"อึ่งอ่าง", choices:["สัตว์เลื้อยคลาน","สัตว์สะเทินน้ำสะเทินบก"], correct:1 },
-        { prompt:"ซาลาแมนเดอร์", choices:["สัตว์สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:0 }, 
-        { prompt:"คางคก", choices:["สัตว์สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:0 }, 
-    { prompt:"เขียด", choices:["สัตว์สะเทินน้ำสะเทินบก","กลุ่มปลา"], correct:0 }, 
-    { prompt:"กบ", choices:["สัตว์สะเทินน้ำสะเทินบก","กลุ่มปลา"], correct:1 }, 
-        { prompt:"แอกโซลอเติล", choices:["สัตว์สะเทินน้ำสะเทินบก","กลุ่มปลา"], correct:0 }, 
-        { prompt:"เขียดงู", choices:["สัตว์สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:0 }, 
+    { prompt:"อึ่งอ่าง", choices:["สัตว์เลื้อยคลาน","สะเทินน้ำสะเทินบก"], correct:1 },
+        { prompt:"ซาลาแมนเดอร์", choices:["สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:0 }, 
+        { prompt:"คางคก", choices:["สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:0 }, 
+    { prompt:"เขียด", choices:["สะเทินน้ำสะเทินบก","กลุ่มปลา"], correct:0 }, 
+    { prompt:"กบ", choices:["สะเทินน้ำสะเทินบก","กลุ่มปลา"], correct:1 }, 
+        { prompt:"แอกโซลอเติล", choices:["สะเทินน้ำสะเทินบก","กลุ่มปลา"], correct:0 }, 
+        { prompt:"เขียดงู", choices:["สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:0 }, 
 
-        { prompt:"จระเข้", choices:["สัตว์สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:1 }, 
+        { prompt:"จระเข้", choices:["สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:1 }, 
         { prompt:"เต่า", choices:["กลุ่มปลา","สัตว์เลื้อยคลาน"], correct:1 }, 
     { prompt:"จิ้งจก", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์เลื้อยคลาน"], correct:1 }, 
-    { prompt:"กิ้งก่า", choices:["สัตว์สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:1 },
+    { prompt:"กิ้งก่า", choices:["สะเทินน้ำสะเทินบก","สัตว์เลื้อยคลาน"], correct:1 },
         { prompt:"มังกรโคโมโด", choices:["สัตว์กินเนื้อ","สัตว์เลื้อยคลาน"], correct:1 },
-    { prompt:"ตัวเงินตัวทอง", choices:["สัตว์เลื้อยคลาน","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
-    { prompt:"งู", choices:["สัตว์เลื้อยคลาน","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
-    { prompt:"อิกัวนา", choices:["สัตว์เลื้อยคลาน","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+    { prompt:"ตัวเงินตัวทอง", choices:["สัตว์เลื้อยคลาน","สะเทินน้ำสะเทินบก"], correct:0 },
+    { prompt:"งู", choices:["สัตว์เลื้อยคลาน","สะเทินน้ำสะเทินบก"], correct:0 },
+    { prompt:"อิกัวนา", choices:["สัตว์เลื้อยคลาน","สะเทินน้ำสะเทินบก"], correct:0 },
 
-        { prompt:"ไก่", choices:["สัตว์ปีก","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
-        { prompt:"เป็ด", choices:["สัตว์ปีก","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+        { prompt:"ไก่", choices:["สัตว์ปีก","สะเทินน้ำสะเทินบก"], correct:0 },
+        { prompt:"เป็ด", choices:["สัตว์ปีก","สะเทินน้ำสะเทินบก"], correct:0 },
     { prompt:"นกพิราบ", choices:["สัตว์บก","สัตว์ปีก"], correct:1 },
         { prompt:"นกฮูก", choices:["สัตว์กลางคืน","สัตว์ปีก"], correct:1 },
         { prompt:"อีกา", choices:["สัตว์เลื้อยคลาน","สัตว์ปีก"], correct:1 },
         { prompt:"นกอินทรี", choices:["สัตว์นักล่า","สัตว์ปีก"], correct:1 },
     { prompt:"นกกระจอกเทศ", choices:["สัตว์บก","สัตว์ปีก"], correct:1 },
-        { prompt:"นกฟลามิงโก", choices:["สัตว์ปีก","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+        { prompt:"นกฟลามิงโก", choices:["สัตว์ปีก","สะเทินน้ำสะเทินบก"], correct:0 },
         { prompt:"นกเงือก", choices:["กลุ่มปลา","สัตว์ปีก"], correct:1 },
         { prompt:"นกแก้ว", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์ปีก"], correct:1 },
 
@@ -1637,14 +1637,14 @@ const LEVEL3_BANK = [
         { prompt:"โลมา", choices:["กลุ่มปลา","สัตว์เลี้ยงลูกด้วยนม"], correct:1 }, 
         { prompt:"ลิงกอริลา", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์กินพืช"], correct:1 },
         { prompt:"ม้าลาย", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์กินพืช"], correct:1 },
-        { prompt:"ฮิปโป", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
-        { prompt:"ช้าง", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+        { prompt:"ฮิปโป", choices:["สัตว์เลี้ยงลูกด้วยนม","สะเทินน้ำสะเทินบก"], correct:0 },
+        { prompt:"ช้าง", choices:["สัตว์เลี้ยงลูกด้วยนม","สะเทินน้ำสะเทินบก"], correct:0 },
         { prompt:"หมีแพนด้า", choices:["สัตว์เลื้อยคลาน","สัตว์เลี้ยงลูกด้วยนม"], correct:1 }, 
         { prompt:"หมู", choices:["สัตว์เลื้อยคลาน","สัตว์เลี้ยงลูกด้วยนม"], correct:1 }, 
         { prompt:"เสือ", choices:["สัตว์หากินกลางคืน","สัตว์เลี้ยงลูกด้วยนม"], correct:1 }, 
         { prompt:"หนู", choices:["สัตว์หากินกลางคืน","สัตว์เลี้ยงลูกด้วยนม"], correct:1 }, 
-        { prompt:"ควาย", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
-        { prompt:"คน", choices:["สัตว์เลี้ยงลูกด้วยนม","สัตว์สะเทินน้ำสะเทินบก"], correct:0 },
+        { prompt:"ควาย", choices:["สัตว์เลี้ยงลูกด้วยนม","สะเทินน้ำสะเทินบก"], correct:0 },
+        { prompt:"คน", choices:["สัตว์เลี้ยงลูกด้วยนม","สะเทินน้ำสะเทินบก"], correct:0 },
         { prompt:"คน", choices:["สัตว์เลื้อยคลาน","สัตว์เลี้ยงลูกด้วยนม"], correct:1 }, 
 ];
 
@@ -1745,6 +1745,7 @@ function startRoundTimer(){
 
   // ======== จบด่าน (แก้ใหม่: หยุดสนามเกมทั้งหมดเมื่อสรุปคะแนน) ========
   function endLevel(){
+        clearCountdown();
     ended = true;
         window.ended = ended; // ✅ อัปเดตค่า global
     running = false;
@@ -1804,6 +1805,7 @@ function pauseGame(){
   
 
 document.getElementById('quickRestart')?.addEventListener('click', ()=>{
+      clearCountdown();
     document.body.classList.remove('prestart');
     restorePlayfield();   // ✅ คืนสนามเกม
     overlay.style.visibility='hidden';
@@ -1831,6 +1833,7 @@ document.getElementById('quickRestart')?.addEventListener('click', ()=>{
 
 
   selectLevelBtn.addEventListener('click', ()=>{
+          clearCountdown();
     document.body.classList.remove('prestart');
     restorePlayfield();   // ✅ คืนสนามเกม
     overlay.style.visibility='hidden';
@@ -1848,24 +1851,72 @@ document.getElementById('quickRestart')?.addEventListener('click', ()=>{
   const startBtn     = document.getElementById('startBtn');
   const countdownEl  = document.getElementById('countdown');
 
+let countdownItv = null;
+function clearCountdown(){
+  if (countdownItv){
+    clearInterval(countdownItv);
+    countdownItv = null;
+  }
+  countdownEl.style.display = 'none';
+  countdownEl.textContent = '3';
+  startBtn.style.display = 'inline-block';
+  startBtn.disabled = false;
+  startBtn.style.pointerEvents = 'auto';
+}
+
+
   function openStart(autoCountdown=true){
-    document.body.classList.add('prestart');   // ให้ HUD โผล่ก่อนเริ่มเกม
+  clearCountdown();
+    document.body.classList.add('prestart');  
     startScreen.style.display='flex';
   
-    if(autoCountdown){
-      let n=3; countdownEl.textContent=n; countdownEl.style.display='block';
-      const itv=setInterval(()=>{ n--; if(n>0){countdownEl.textContent=n}else{ clearInterval(itv); startScreen.style.display='none'; startGame() } },1000);
+if (autoCountdown) {
+  let n = 3;
+  countdownEl.textContent = n;
+  countdownEl.style.display = 'block';
+
+  countdownItv = setInterval(() => {
+    n--;
+    if (n > 0) {
+      countdownEl.textContent = n;
     } else {
+      clearInterval(countdownItv);
+      countdownItv = null;
+      startScreen.style.display = 'none';
+      startGame();
+    }
+  }, 1000);
+}
+
+    else {
       startBtn.disabled=false; startBtn.style.pointerEvents='auto';
       startBtn.style.display='inline-block'; countdownEl.style.display='none';
     }
   }
   startBtn?.addEventListener('click', ()=>{
+      clearCountdown(); 
     if(startBtn.disabled) return;
     startBtn.disabled=true; startBtn.style.pointerEvents='none';
     startBtn.style.display='none';
-    let n=3; countdownEl.textContent=n; countdownEl.style.display='block';
-    const itv=setInterval(()=>{ n--; if(n>0){ countdownEl.textContent=n } else { clearInterval(itv); startScreen.style.display='none'; startGame(); startBtn.disabled=false; startBtn.style.pointerEvents='auto'; } },1000);
+    
+let n = 3;
+countdownEl.textContent = n;
+countdownEl.style.display = 'block';
+
+countdownItv = setInterval(() => {
+  n--;
+  if (n > 0) {
+    countdownEl.textContent = n;
+  } else {
+    clearInterval(countdownItv);
+    countdownItv = null;
+    startScreen.style.display = 'none';
+    startGame();
+    startBtn.disabled = false;
+    startBtn.style.pointerEvents = 'auto';
+  }
+}, 1000);
+
   });
 
 
@@ -2029,4 +2080,3 @@ function getMissionTitle(lv){
 </script>
 </body>
 </html>
-
